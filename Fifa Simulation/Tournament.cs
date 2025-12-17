@@ -41,7 +41,8 @@ namespace Fifa_Simulation
                 SingleElimination elim = new(swiss.AdvancedTeams);
                 Team winner = elim.Run();
 
-                AwardPoints(allTeams, sim);
+                winner.Seed = 1;
+                AwardPoints(seeded, sim);
             }
 
             DisplayFinalPointStandings();
@@ -83,7 +84,9 @@ namespace Fifa_Simulation
         {
             foreach(var team in teams)
             {
-                switch(team.Seed)
+                Console.WriteLine($"Team: {team.name} Seed: {team.Seed}");
+
+                switch (team.Seed)
                 {
                     case 1:
                         team.Points += WinnerPoints[sim];

@@ -45,7 +45,7 @@ namespace Fifa_Simulation
                 lowerBracket.Add(g.Teams[1]);
             }
 
-            Console.WriteLine("\n--- UPPER/LOWER BRACKET MATCHUPS ---");
+            Console.WriteLine("\n--- UPPER BRACKET MATCHUPS ---");
 
             // Upper bracket step 1: top seeds play
             var upperWinners = new List<Team>();
@@ -64,6 +64,7 @@ namespace Fifa_Simulation
             }
 
             // Lower bracket step 2: initial single elimination
+            Console.WriteLine("\n--- LOWER BRACKET MATCHUPS ---");
             var lowerWinners = new List<Team>();
             for (int i = 0; i < lowerBracket.Count; i += 2)
             {
@@ -76,6 +77,7 @@ namespace Fifa_Simulation
             }
 
             // Step 3: lower winners vs upper losers (quarterfinals)
+            Console.WriteLine("\n--- QUARTERFINAL BRACKET MATCHUPS ---");
             var quarterFinalists = new List<Team>();
             for (int i = 0; i < upperLosers.Count; i++)
             {
