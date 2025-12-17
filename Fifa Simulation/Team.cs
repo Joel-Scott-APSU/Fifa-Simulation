@@ -17,11 +17,13 @@ namespace Fifa_Simulation
         public int Points { get; set; }
 
         public int Seed { get; set; }
+        public double PerformanceBias { get; set; }
 
-        public Team(string name, int elo)
+        public Team(string name, int elo, double PerformanceBias)
         {
             this.name = name;
             this.elo = elo;
+            this.PerformanceBias = PerformanceBias;
             Points = 0;
             Seed = 0;
             Wins = 0;
