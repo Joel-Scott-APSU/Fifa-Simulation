@@ -52,7 +52,7 @@ namespace Fifa_Simulation
                 double winPercent = totalGames > 0 ? (double)team.Wins / totalGames * 100 : 0;
 
                 Console.WriteLine(
-                    $"{rank,2}. {team.name,-25}  W:{team.Wins}  L:{team.Losses}  Elo:{team.elo} Win Percent:{winPercent}"
+                    $"{rank,2}. {team.name,-25}  W:{team.Wins}  L:{team.Losses}  Elo:{team.elo} Win Percent:{Math.Round(winPercent, 2)}"
                 );
                 rank++;
                 team.resetRecord();

@@ -33,13 +33,32 @@ namespace Fifa_Simulation
             while (teams.Count > 1)
             {
                 if (round == 1)
+                {
                     Console.WriteLine("\nQuarterfinals");
+                }
                 else if (round == 2)
                     Console.WriteLine("\nSemifinals");
                 else
                     Console.WriteLine("\nFinals");
 
                 teams = PlayRound(teams);
+                foreach(Team team in eliminatedTeams)
+                {
+                    if(round == 1)
+                    {
+                        team.Seed = 8;
+                    }
+                    else if(round == 2)
+                    {
+                        team.Seed = 4;
+                    }
+                    else
+                    {
+                        team.Seed = 2;
+                    }
+                }
+
+                eliminatedTeams.Clear();
                 round++;
             }
 

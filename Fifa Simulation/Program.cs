@@ -23,9 +23,13 @@ namespace Fifa_Simulation
                 new Group("Group D", groupD)
             };
 
+            var allTeams = groups.SelectMany(g => g.Teams).ToList();
+
             // Run the tournament (3 simulations, escalating points)
             Tournament tournament = new Tournament(groups);
+            var finals = new FinalsTournament(allTeams);
             tournament.RunThreeSimulations();
+            finals.Run();
             Console.ReadLine();
         }
     }

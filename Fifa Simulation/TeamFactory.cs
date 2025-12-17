@@ -12,7 +12,7 @@ namespace Fifa_Simulation
         // Top 4 special teams
         private static readonly List<Team> Top4 = new()
 {
-    new Team("New England Revolution", 5000),
+    new Team("New England Revolution", 2200),
     new Team("Inter Miami", 2180),
     new Team("Soccer Aid", 2160),
     new Team("adidas All Stars", 2140)

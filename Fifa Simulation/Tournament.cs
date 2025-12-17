@@ -9,13 +9,9 @@ namespace Fifa_Simulation
         private readonly List<Group> groups;
         private readonly List<Team> allTeams;
 
-        private static readonly int[][] SwissPoints =
-        {
-            new[] { 3, 4, 5 }, // 0 wins
-            new[] { 4, 5, 6 }, // 1 win
-            new[] { 5, 6, 7 }  // 2 wins
-        };
-
+        private static readonly int[] NoWinsSwiss = { 3, 4, 5 };
+        private static readonly int[] OneWinSwiss = { 4, 5, 6 };
+        private static readonly int[] TwoWinsSiwss = {5, 6, 7};
         private static readonly int[] Top8Points = { 8, 10, 12 };
         private static readonly int[] Top4Points = { 12, 16, 20 };
         private static readonly int[] SecondPoints = { 16, 24, 32 };
@@ -40,12 +36,12 @@ namespace Fifa_Simulation
                 SwissTournament swiss = new(seeded);
                 swiss.Run();
                 swiss.DisplaySwissResults();
-                AwardSwissPoints(swiss, sim);
+                swiss.SwissPlacement();
 
                 SingleElimination elim = new(swiss.AdvancedTeams);
                 Team winner = elim.Run();
 
-                AwardEliminationPoints(elim, sim);
+                AwardPoints(allTeams, sim);
             }
 
             DisplayFinalPointStandings();
@@ -83,53 +79,42 @@ namespace Fifa_Simulation
             return qualified;
         }
 
-        private void AwardSwissPoints(SwissTournament swiss, int sim)
+        private void AwardPoints(List<Team> teams, int sim)
         {
-            foreach (var team in swiss.EliminatedTeams)
+            foreach(var team in teams)
             {
-                int wins = team.Wins;
-                team.Points += SwissPoints[wins][sim];
-            }
+                switch(team.Seed)
+                {
+                    case 1:
+                        team.Points += WinnerPoints[sim];
+                        break;
 
-            foreach (var team in swiss.AdvancedTeams)
-            {
-                team.Points += Top8Points[sim];
+                    case 2:
+                        team.Points += SecondPoints[sim];
+                        break;
+
+                    case 4:
+                        team.Points += Top4Points[sim];
+                        break;
+
+                    case 8:
+                        team.Points += Top8Points[sim];
+                        break;
+
+                    case 9:
+                        team.Points += TwoWinsSiwss[sim];
+                        break;
+
+                    case 12:
+                        team.Points += OneWinSwiss[sim];
+                        break;
+
+                    case 15:
+                        team.Points += NoWinsSwiss[sim];
+                        break;                        
+                }
             }
         }
-
-        private void AwardEliminationPoints(SingleElimination elim, int sim)
-        {
-            // Get all teams that participated in the elimination stage
-            var remainingTeams = elim.GetFinalists();
-
-            if (remainingTeams.Count < 2)
-                return;
-
-            // Determine winner and runner-up
-            Team winner = remainingTeams[0]; // This should be the winner returned by elim.Run()
-            Team runnerUp = remainingTeams[1];
-
-            // Clear previously accumulated round-specific points before awarding final
-            foreach (var t in remainingTeams)
-
-            // Award points ONLY based on final standing
-            winner.Points += WinnerPoints[sim];         // e.g., 20, 30, 40
-            runnerUp.Points += SecondPoints[sim];      // e.g., 16, 24, 32
-
-            // Award points to eliminated teams based on last round reached
-            var eliminated = elim.GetEliminated(); // You’ll need to expose eliminated teams from SingleElimination
-            foreach (var t in eliminated)
-            {
-                // Example logic for top 4 eliminated or top 8 eliminated
-                if (t.Wins == 3) // reached semifinals but lost
-                    t.Points += Top4Points[sim]; // e.g., 12, 16, 20
-                else if (t.Wins == 2) // eliminated earlier
-                    t.Points += Top8Points[sim]; // e.g., 8, 10, 12
-                                                 // else no points
-            }
-        }
-
-
 
         private void DisplayFinalPointStandings()
         {

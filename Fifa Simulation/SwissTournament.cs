@@ -100,5 +100,24 @@ namespace Fifa_Simulation
             foreach (var entry in matchLog)
                 Console.WriteLine(entry);
         }
+
+        public void SwissPlacement()
+        {
+            foreach(Team team in EliminatedTeams)
+            {
+                if(team.Wins == 0)
+                {
+                    team.Seed = 15;
+                }
+                else if(team.Wins == 1)
+                {
+                    team.Seed = 12;
+                }
+                else
+                {
+                    team.Seed = 9;
+                }
+            }
+        }
     }
 }
