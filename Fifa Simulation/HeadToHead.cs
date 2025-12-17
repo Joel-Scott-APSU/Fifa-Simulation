@@ -13,7 +13,7 @@ namespace Fifa_Simulation
         public void RecordWin(Team Winner, Team Loser)
         {
             var key = (Winner, Loser);
-            wins[key] = wins.GetValueOrDefault(key);
+            wins[key] = wins.GetValueOrDefault(key) + 1;
         }
 
         public int GetWins(Team a, Team b)
