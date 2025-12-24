@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Fifa_Simulation
@@ -11,19 +10,25 @@ namespace Fifa_Simulation
 
         public FinalsTournament(List<Team> allTeams)
         {
-            // Select top 16 based on points, breaking ties by Elo
             top16 = allTeams
                 .OrderByDescending(t => t.Points)
                 .ThenByDescending(t => t.elo)
                 .Take(16)
                 .ToList();
+
+            int seed = 1;
+
+            foreach (var t in top16)
+            {
+                t.Seed = seed;
+                seed++;
+            }
         }
 
         public void Run()
         {
             Console.WriteLine("\n========== FINALS ==========");
 
-            // Split top16 into 4 groups for the round-robin stage
             var groups = new List<FinalsGroup>
             {
                 new FinalsGroup("A", new() { top16[0], top16[15], top16[8], top16[7] }),
@@ -32,13 +37,12 @@ namespace Fifa_Simulation
                 new FinalsGroup("D", new() { top16[3], top16[12], top16[11], top16[4] })
             };
 
-            // Run each group
             foreach (var g in groups)
                 g.Run();
 
-            // Collect top 2 from each group
-            List<Team> upperBracket = new(); // 1st place teams
-            List<Team> lowerBracket = new(); // 2nd place teams
+            List<Team> upperBracket = new();
+            List<Team> lowerBracket = new();
+
             foreach (var g in groups)
             {
                 upperBracket.Add(g.Teams[0]);
@@ -47,13 +51,14 @@ namespace Fifa_Simulation
 
             Console.WriteLine("\n--- UPPER BRACKET MATCHUPS ---");
 
-            // Upper bracket step 1: top seeds play
             var upperWinners = new List<Team>();
             var upperLosers = new List<Team>();
+
             for (int i = 0; i < upperBracket.Count; i += 2)
             {
                 Team a = upperBracket[i];
                 Team b = upperBracket[i + 1];
+
                 Team winner = new Match(a, b).Play();
                 Team loser = winner == a ? b : a;
 
@@ -63,51 +68,77 @@ namespace Fifa_Simulation
                 Console.WriteLine($"Upper Bracket: {a.name} vs {b.name} --- Winner: {winner.name}");
             }
 
-            // Lower bracket step 2: initial single elimination
             Console.WriteLine("\n--- LOWER BRACKET MATCHUPS ---");
+
             var lowerWinners = new List<Team>();
             for (int i = 0; i < lowerBracket.Count; i += 2)
             {
                 Team a = lowerBracket[i];
                 Team b = lowerBracket[i + 1];
+
                 Team winner = new Match(a, b).Play();
                 lowerWinners.Add(winner);
 
                 Console.WriteLine($"Lower Bracket: {a.name} vs {b.name} --- Winner: {winner.name}");
             }
 
-            // Step 3: lower winners vs upper losers (quarterfinals)
             Console.WriteLine("\n--- QUARTERFINAL BRACKET MATCHUPS ---");
+
             var quarterFinalists = new List<Team>();
             for (int i = 0; i < upperLosers.Count; i++)
             {
                 Team a = upperLosers[i];
                 Team b = lowerWinners[i];
+
                 Team winner = new Match(a, b).Play();
                 quarterFinalists.Add(winner);
 
                 Console.WriteLine($"Quarterfinal: {a.name} vs {b.name} --- Winner: {winner.name}");
             }
 
-            // Step 4: semifinals
-            Console.WriteLine("\n--- SEMIFINALS ---");
+            // 🔥 SEMIFINALS — BEST OF 3
+            Console.WriteLine("\n--- SEMIFINALS (BEST OF 3) ---\n----------------------------------------");
+
             List<Team> semiFinalWinners = new();
-            for(int i = 0; i < 2; i++)
+            for (int i = 0; i < 2; i++)
             {
                 Team a = upperWinners[i];
                 Team b = quarterFinalists[i];
 
-                Team winner = new Match(a, b).Play();
+                Team winner = PlayBestOf(a, b, 3);
                 semiFinalWinners.Add(winner);
 
-                Console.WriteLine($"Semifinal: {a.name} vs {b.name} --- Winner: {winner.name}");
+                Console.WriteLine($"Semifinal Winner: {winner.name}\n");
             }
 
-            // Step 5: final
-            Console.WriteLine("\n--- FINALS ---");
-            Team champion = new Match(semiFinalWinners[0], semiFinalWinners[1]).Play();
-            Console.WriteLine($"{semiFinalWinners[0].name} vs {semiFinalWinners[1].name}");
+            // 🏆 FINALS — BEST OF 5
+            Console.WriteLine("\n--- FINALS (BEST OF 5) ---\n-------------------------------------------");
+
+            Team champion = PlayBestOf(semiFinalWinners[0], semiFinalWinners[1], 5);
             Console.WriteLine($"\nCHAMPION: {champion.name}");
+        }
+
+        // =========================
+        // BEST OF SERIES HELPER
+        // =========================
+        private Team PlayBestOf(Team a, Team b, int games)
+        {
+            int winsA = 0;
+            int winsB = 0;
+            int required = games / 2 + 1;
+
+            Console.WriteLine($"{a.name} vs {b.name} (Best of {games})");
+
+            while (winsA < required && winsB < required)
+            {
+                Team winner = new Match(a, b).Play();
+                if (winner == a) winsA++;
+                else winsB++;
+
+                Console.WriteLine($"Game Result: {winner.name} | Series {winsA}-{winsB}");
+            }
+
+            return winsA > winsB ? a : b;
         }
     }
 }

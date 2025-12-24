@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Fifa_Simulation
 {
@@ -14,6 +9,9 @@ namespace Fifa_Simulation
         private readonly Team teamA;
         private readonly Team teamB;
 
+        // How much bias can swing Elo (tunable)
+        private const int MaxBiasEloSwing = 120;
+
         public Match(Team teamA, Team teamB)
         {
             this.teamA = teamA;
@@ -22,7 +20,10 @@ namespace Fifa_Simulation
 
         public Team Play()
         {
-            double probabilityA = GetWinProbability(teamA.elo, teamB.elo);
+            double effectiveEloA = GetEffectiveElo(teamA);
+            double effectiveEloB = GetEffectiveElo(teamB);
+
+            double probabilityA = GetWinProbability(effectiveEloA, effectiveEloB);
 
             Team winner = rng.NextDouble() < probabilityA ? teamA : teamB;
             Team loser = winner == teamA ? teamB : teamA;
@@ -33,9 +34,25 @@ namespace Fifa_Simulation
             return winner;
         }
 
-        private static double GetWinProbability(int eloA, int eloB)
+        /// <summary>
+        /// Converts Elo + performance bias into a match-specific Elo
+        /// </summary>
+        private static double GetEffectiveElo(Team team)
         {
-            return 1.0 / (1.0 + Math.Pow(10, (double)(eloB - eloA) / 400.0));
+            // Bias is [0.0, 1.0] → map to [-1, +1]
+            double biasCentered = (team.PerformanceBias - 0.5) * 2.0;
+
+            // Small random variance so same teams don't play identically
+            double noise = rng.NextDouble() * 0.15 - 0.075; // ±7.5%
+
+            double biasMultiplier = biasCentered + noise;
+
+            return team.elo + (biasMultiplier * MaxBiasEloSwing);
+        }
+
+        private static double GetWinProbability(double eloA, double eloB)
+        {
+            return 1.0 / (1.0 + Math.Pow(10, (eloB - eloA) / 400.0));
         }
     }
 }
