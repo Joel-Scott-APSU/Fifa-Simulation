@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Fifa_Simulation.Teams;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Fifa_Simulation
+namespace Fifa_Simulation.Tournaments
 {
     public class SingleElimination
     {
@@ -24,24 +25,24 @@ namespace Fifa_Simulation
                 this.teams[i].Seed = i + 1;
         }
 
-        public Team Run()
+        public Team Run(StreamWriter writer)
         {
             int round = 1;
 
-            Console.WriteLine($"\n--- ELIMINATION ROUND ---");
+            writer.WriteLine($"\n--- ELIMINATION ROUND ---");
 
             while (teams.Count > 1)
             {
                 if (round == 1)
                 {
-                    Console.WriteLine("\nQuarterfinals");
+                    writer.WriteLine("\nQuarterfinals\n----------------------------------");
                 }
                 else if (round == 2)
-                    Console.WriteLine("\nSemifinals");
+                    writer.WriteLine("\nSemifinals\n----------------------------------");
                 else
-                    Console.WriteLine("\nFinals");
+                    writer.WriteLine("\nFinals\n----------------------------------");
 
-                teams = PlayRound(teams);
+                teams = PlayRound(teams, writer);
                 foreach(Team team in eliminatedTeams)
                 {
                     if(round == 1)
@@ -64,12 +65,12 @@ namespace Fifa_Simulation
 
             if (teams.Count > 0)
             {
-                Console.WriteLine($"\n🏆 WINNER: {teams[0].name} (Seed {teams[0].Seed})");
+                writer.WriteLine($"\n  WINNER: {teams[0].name}");
                 return teams[0];
             }
             else
             {
-                Console.WriteLine("No teams remaining to select a winner!");
+                writer.WriteLine("No teams remaining to select a winner!");
                 return null;
             }
         }
@@ -80,7 +81,7 @@ namespace Fifa_Simulation
             return finalRoundTeams.Count >= 2 ? finalRoundTeams.Take(2).ToList() : new List<Team>(teams);
         }
 
-        private List<Team> PlayRound(List<Team> roundTeams)
+        private List<Team> PlayRound(List<Team> roundTeams, StreamWriter writer)
         {
             List<Team> winners = new();
             int l = 0, r = roundTeams.Count - 1;
@@ -89,12 +90,12 @@ namespace Fifa_Simulation
             {
                 Team a = roundTeams[l];
                 Team b = roundTeams[r];
-                new Match(a, b).Play();
+                new Helpers.Match(a, b).Play();
 
                 Team winner = a.Wins > b.Wins ? a : b;
                 Team loser = winner == a ? b : a;
 
-                Console.WriteLine($"{a.name} vs {b.name} --- Winner {winner.name}");
+                writer.WriteLine($"{a.name} vs {b.name} --- Winner {winner.name}");
 
                 winners.Add(winner);
                 eliminatedTeams.Add(loser); // Track losers
@@ -115,23 +116,7 @@ namespace Fifa_Simulation
         }
 
 
-        public void PrintRemainingTeams(string message = "Current Remaining Teams")
-        {
-            Console.WriteLine($"\n--- {message} ---");
-            if (teams.Count == 0)
-            {
-                Console.WriteLine("No teams remaining!");
-                return;
-            }
 
-            for (int i = 0; i < teams.Count; i++)
-            {
-                var t = teams[i];
-                Console.WriteLine(
-                    $"Index {i}: Seed {t.Seed}, {t.name}, W:{t.Wins}, L:{t.Losses}, Points:{t.Points}, Elo:{t.elo}"
-                );
-            }
-        }
 
         public List<Team> GetEliminated()
         {

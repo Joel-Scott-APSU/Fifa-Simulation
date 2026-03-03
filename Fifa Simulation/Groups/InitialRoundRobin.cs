@@ -1,15 +1,16 @@
-﻿using System;
+﻿using Fifa_Simulation.Teams;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Fifa_Simulation
+namespace Fifa_Simulation.Groups
 {
-    public class Group
+    public class InitialRoundRobin
     {
         public string name { get; }
         public List<Team> Teams { get; }
 
-        public Group(string name, List<Team> teams)
+        public InitialRoundRobin(string name, List<Team> teams)
         {
             this.name = name;
             Teams = teams;
@@ -23,10 +24,10 @@ namespace Fifa_Simulation
                 for (int j = i + 1; j < Teams.Count; j++)
                 {
                     // Match 1: i home, j away
-                    new Match(Teams[i], Teams[j]).Play();
+                    new Helpers.Match(Teams[i], Teams[j]).Play();
 
                     // Match 2: j home, i away
-                    new Match(Teams[j], Teams[i]).Play();
+                    new Helpers.Match(Teams[j], Teams[i]).Play();
                 }
             }
         }
@@ -41,9 +42,9 @@ namespace Fifa_Simulation
         }
 
         // Display final standings after group matches
-        public void DisplayFinalStandings()
+        public void DisplayFinalStandings(StreamWriter writer)
         {
-            Console.WriteLine($"\n========== {name} FINAL STANDINGS ==========");
+            writer.WriteLine($"\n========== {name} FINAL STANDINGS ==========");
 
             int rank = 1;
             foreach (var team in GetStandings())
@@ -51,11 +52,10 @@ namespace Fifa_Simulation
                 int totalGames = team.Wins + team.Losses;
                 double winPercent = totalGames > 0 ? (double)team.Wins / totalGames * 100 : 0;
 
-                Console.WriteLine(
-                    $"{rank,2}. {team.name,-25}  W:{team.Wins}  L:{team.Losses}  Elo:{team.elo} Win Percent:{Math.Round(winPercent, 2)}"
+                writer.WriteLine(
+                    $"{rank,2}. {team.name,-25}  W:{team.Wins}  L:{team.Losses}  Elo:{team.elo} Win Percent:{Math.Round(winPercent, 2)} Matches Played {team.MatchCounter}"
                 );
                 rank++;
-                team.resetRecord();
             }
 
         }

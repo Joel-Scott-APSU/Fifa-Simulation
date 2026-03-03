@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Fifa_Simulation.Teams;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fifa_Simulation
+namespace Fifa_Simulation.Helpers
 {
     public class HeadToHead
     {

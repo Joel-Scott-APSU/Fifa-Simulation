@@ -1,9 +1,8 @@
-﻿using Fifa_Simulation;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Fifa_Simulation
+namespace Fifa_Simulation.Teams
 {
     public static class TeamFactory
     {
@@ -12,10 +11,10 @@ namespace Fifa_Simulation
         // Top 4 special teams
         private static readonly List<Team> Top4 = new()
 {
-    new Team("New England Revolution", 2200, 0.88),
+    new Team("New England Revolution", 2230, 0.88),
     new Team("Inter Miami", 2180, 0.84),
     new Team("Soccer Aid", 2160, 0.80),
-    new Team("adidas All Stars", 2140, 0.78)
+    new Team("Adidas All Stars", 2140, 0.78)
 };
 
 
@@ -82,9 +81,6 @@ namespace Fifa_Simulation
     new Team("Girona FC", 1962, 0.46),
     new Team("Mallorca", 1961, 0.44),
     new Team("Cagliari", 1960, 0.43),
-    new Team("Spezia", 1959, 0.42),
-    new Team("Salernitana", 1958, 0.41),
-    new Team("Bologna", 1957, 0.48)
 };
 
 
@@ -94,9 +90,16 @@ namespace Fifa_Simulation
                                         out List<Team> groupD)
         {
             groupA = new List<Team> { Top4[0] };
+            Top4[0].SourceGroup = 0;
+
             groupB = new List<Team> { Top4[1] };
+            Top4[1].SourceGroup = 1;
+
             groupC = new List<Team> { Top4[2] };
+            Top4[2].SourceGroup = 2;
+
             groupD = new List<Team> { Top4[3] };
+            Top4[3].SourceGroup = 3;
 
             // Shuffle remaining pro teams
             List<Team> shuffled = ProTeams.OrderBy(x => rng.Next()).ToList();
@@ -107,10 +110,10 @@ namespace Fifa_Simulation
             {
                 switch (index)
                 {
-                    case 0: groupA.Add(team); break;
-                    case 1: groupB.Add(team); break;
-                    case 2: groupC.Add(team); break;
-                    case 3: groupD.Add(team); break;
+                    case 0: groupA.Add(team); team.SourceGroup = 0; break;
+                    case 1: groupB.Add(team); team.SourceGroup = 1; break;
+                    case 2: groupC.Add(team); team.SourceGroup = 2; break;
+                    case 3: groupD.Add(team); team.SourceGroup = 3; break;
                 }
                 index = (index + 1) % 4;
             }

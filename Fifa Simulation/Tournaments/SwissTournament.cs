@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Fifa_Simulation.Teams;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Fifa_Simulation
+namespace Fifa_Simulation.Tournaments
 {
     public class SwissTournament
     {
@@ -43,7 +44,7 @@ namespace Fifa_Simulation
                     $"Seed {a.Seed} ({a.Wins}-{a.Losses}) vs Seed {b.Seed} ({b.Wins}-{b.Losses})"
                 );
 
-                new Match(a, b).Play();
+                new Helpers.Match(a, b).Play();
             }
 
             ResolveTeams();
@@ -83,22 +84,22 @@ namespace Fifa_Simulation
             return pairings;
         }
 
-        public void DisplaySwissResults()
+        public void DisplaySwissResults(StreamWriter writer)
         {
-            Console.WriteLine("\n--- ADVANCED FROM SWISS ---");
+            writer.WriteLine("\n--- ADVANCED FROM SWISS ---");
             foreach (var t in AdvancedTeams.OrderBy(t => t.Wins).ThenBy(t => t.Losses))
-                Console.WriteLine($"{t.name} ({t.Wins}-{t.Losses})");
+                   writer.WriteLine($"{t.name} ({t.Wins}-{t.Losses})");
 
-            Console.WriteLine("\n--- ELIMINATED IN SWISS ---");
+            writer.WriteLine("\n--- ELIMINATED IN SWISS ---");
             foreach (var t in EliminatedTeams.OrderBy(t => t.Wins).ThenBy(t => t.Losses))
-                Console.WriteLine($"{t.name} ({t.Wins}-{t.Losses})");
+                writer.WriteLine($"{t.name} ({t.Wins}-{t.Losses})");
         }
 
-        public void DisplaySwissMatchLog()
+        public void DisplaySwissMatchLog(StreamWriter writer)
         {
-            Console.WriteLine("\n--- SWISS MATCH LOG ---");
+            writer.WriteLine("\n--- SWISS MATCH LOG ---");
             foreach (var entry in matchLog)
-                Console.WriteLine(entry);
+                writer.WriteLine(entry);
         }
 
         public void SwissPlacement()

@@ -5,7 +5,7 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fifa_Simulation
+namespace Fifa_Simulation.Teams
 {
     public class Team
     {
@@ -18,6 +18,9 @@ namespace Fifa_Simulation
 
         public int Seed { get; set; }
         public double PerformanceBias { get; set; }
+        public int MatchCounter { get; set; }
+
+        public int SourceGroup { get; set; }
 
         public Team(string name, int elo, double PerformanceBias)
         {
@@ -28,12 +31,14 @@ namespace Fifa_Simulation
             Seed = 0;
             Wins = 0;
             Losses = 0;
+            MatchCounter = 0;
         }
 
         public void resetRecord()
         {
             Wins = 0;
             Losses = 0;
+            MatchCounter = 0;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Fifa_Simulation;
+﻿using Fifa_Simulation.Helpers;
+using Fifa_Simulation.Teams;
 
 public class FinalsGroup
 {
@@ -19,23 +20,23 @@ public class FinalsGroup
         }
     }
 
-    public void Run()
+    public void Run(TextWriter writer)
     {
-        Console.WriteLine($"\n=== GROUP {Name} ===");
+        writer.WriteLine($"\n=== GROUP {Name} ===");
 
         for (int i = 0; i < Teams.Count; i++)
         {
             for (int j = i + 1; j < Teams.Count; j++)
             {
-                PlayDoubleMatch(Teams[i], Teams[j]);
+                PlayDoubleMatch(Teams[i], Teams[j], writer);
             }
         }
 
         SeedGroup();
-        PrintStandings();
+        PrintStandings(writer);
     }
 
-    private void PlayDoubleMatch(Team a, Team b)
+    private void PlayDoubleMatch(Team a, Team b, TextWriter writer)
     {
         for (int i = 0; i < 2; i++)
         {
@@ -44,7 +45,7 @@ public class FinalsGroup
 
             h2h.RecordWin(winner, loser);
 
-            Console.WriteLine($"{a.name} vs {b.name} --- {winner.name}");
+            writer.WriteLine($"{a.name} vs {b.name} --- {winner.name}");
         }
     }
 
@@ -70,13 +71,13 @@ public class FinalsGroup
             Teams[i].Seed = i + 1;
     }
 
-    private void PrintStandings()
+    private void PrintStandings(TextWriter writer)
     {
-        Console.WriteLine($"\n--- GROUP {Name} STANDINGS ---");
+        writer.WriteLine($"\n--- GROUP {Name} STANDINGS ---");
         for (int i = 0; i < Teams.Count; i++)
         {
             var t = Teams[i];
-            Console.WriteLine(
+            writer.WriteLine(
                 $"{i + 1}. {t.name}  W:{t.Wins} L:{t.Losses}"
             );
         }
