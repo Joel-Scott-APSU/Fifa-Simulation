@@ -1,120 +1,253 @@
-﻿using System;
+﻿using Fifa_Simulation.Teams;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Text;
 
-namespace Fifa_Simulation.Teams
+namespace Fifa_Sim_Test
 {
-    public static class TeamFactory
+    public class TeamFactory
     {
-        private static readonly Random rng = new Random();
+        // WESTERN EUROPE (64)
 
-        // Top 4 special teams
-        private static readonly List<Team> Top4 = new()
+        private static readonly List<Team> WesternEuropeTeams = new()
 {
-    new Team("New England Revolution", 2310),
-    new Team("Inter Miami", 2250),
-    new Team("Soccer Aid", 2240),
-    new Team("Adidas All Stars", 2210)
+    new Team("Manchester City", 2050),
+    new Team("Real Madrid", 2030),
+    new Team("Bayern Munich", 2010),
+    new Team("Liverpool", 1985),
+    new Team("Barcelona", 1975),
+    new Team("Arsenal", 1965),
+    new Team("Paris Saint-Germain", 1955),
+    new Team("Atletico Madrid", 1945),
+
+    new Team("Borussia Dortmund", 1925),
+    new Team("Bayer Leverkusen", 1905),
+    new Team("Chelsea", 1895),
+    new Team("Tottenham Hotspur", 1885),
+    new Team("RB Leipzig", 1875),
+    new Team("Manchester United", 1865),
+    new Team("Newcastle United", 1855),
+    new Team("Aston Villa", 1840),
+
+    new Team("Real Sociedad", 1830),
+    new Team("Villarreal", 1820),
+    new Team("Sevilla", 1810),
+    new Team("Athletic Bilbao", 1800),
+    new Team("Brighton", 1790),
+    new Team("West Ham United", 1780),
+    new Team("Eintracht Frankfurt", 1770),
+    new Team("Wolfsburg", 1760),
+
+    new Team("Stuttgart", 1750),
+    new Team("Lens", 1740),
+    new Team("Lille", 1730),
+    new Team("Monaco", 1720),
+    new Team("Marseille", 1710),
+    new Team("Lyon", 1700),
+    new Team("Rennes", 1690),
+    new Team("Nice", 1680),
+
+    new Team("Real Betis", 1670),
+    new Team("Valencia", 1660),
+    new Team("Girona", 1650),
+    new Team("Union Berlin", 1640),
+    new Team("Freiburg", 1630),
+    new Team("AZ Alkmaar", 1620),
+    new Team("Feyenoord", 1610),
+    new Team("Ajax", 1600),
+
+    new Team("PSV Eindhoven", 1595),
+    new Team("Club Brugge", 1590),
+    new Team("Anderlecht", 1585),
+    new Team("Genk", 1580),
+    new Team("Gent", 1575),
+    new Team("Celtic", 1570),
+    new Team("Rangers", 1565),
+    new Team("Utrecht", 1560),
+
+    new Team("Heerenveen", 1555),
+    new Team("Standard Liege", 1550),
+    new Team("Charleroi", 1545),
+    new Team("Montpellier", 1540),
+    new Team("Nantes", 1535),
+    new Team("Toulouse", 1530),
+    new Team("Boavista", 1525),
+    new Team("Vitoria Guimaraes", 1520),
+
+    new Team("St Pauli", 1515),
+    new Team("Sunderland", 1510),
+    new Team("Middlesbrough", 1505)
 };
 
-        private static readonly List<Team> ProTeams = new()
+        // CENTRAL EUROPE (32)
+
+        private static readonly List<Team> CentralEuropeTeams = new()
 {
-    new Team("Paris Saint-Germain", 2020),
-    new Team("Bayern Munich", 2018),
-    new Team("Manchester City", 2017),
-    new Team("Liverpool", 2016),
-    new Team("Real Madrid", 2015),
-    new Team("Barcelona", 2014),
-    new Team("Chelsea FC", 2013),
-    new Team("Manchester United", 2012),
-    new Team("Atletico Madrid", 2011),
-    new Team("Juventus", 2010),
-    new Team("Inter Milan", 2009),
-    new Team("AC Milan", 2008),
-    new Team("Ajax", 2007),
-    new Team("RB Leipzig", 2006),
-    new Team("Napoli", 2005),
-    new Team("Sevilla FC", 2004),
-    new Team("Atalanta", 2003),
-    new Team("Sporting CP", 2002),
-    new Team("Benfica", 2001),
-    new Team("FC Porto", 2000),
-    new Team("Borussia Dortmund", 1999),
-    new Team("AS Roma", 1998),
-    new Team("Olympique Lyonnais", 1997),
-    new Team("AS Monaco", 1996),
-    new Team("Bayer Leverkusen", 1995),
-    new Team("Tottenham Hotspur", 1994),
-    new Team("Leicester City", 1993),
-    new Team("West Ham United", 1992),
-    new Team("Aston Villa", 1991),
-    new Team("Wolverhampton Wanderers", 1990),
-    new Team("Real Sociedad", 1989),
-    new Team("Villarreal", 1988),
-    new Team("Fiorentina", 1987),
-    new Team("Sassuolo", 1986),
-    new Team("Monchengladbach", 1985),
-    new Team("Schalke 04", 1984),
-    new Team("Eintracht Frankfurt", 1983),
-    new Team("Valencia CF", 1982),
-    new Team("Real Betis", 1981),
-    new Team("Celtic", 1980),
-    new Team("Rangers", 1979),
-    new Team("PSV Eindhoven", 1978),
-    new Team("Feyenoord", 1977),
-    new Team("Marseille", 1976),
-    new Team("Nice", 1975),
-    new Team("Lille", 1974),
-    new Team("Lazio", 1973),
-    new Team("Torino", 1972),
-    new Team("Sampdoria", 1971),
-    new Team("Udinese", 1970),
-    new Team("Genoa", 1969),
-    new Team("Hertha Berlin", 1968),
-    new Team("Union Berlin", 1967),
-    new Team("Hoffenheim", 1966),
-    new Team("Stuttgart", 1965),
-    new Team("Real Valladolid", 1964),
-    new Team("Espanyol", 1963),
-    new Team("Girona FC", 1962),
-    new Team("Mallorca", 1961),
-    new Team("Cagliari", 1960)
+    new Team("Red Bull Salzburg", 1810),
+    new Team("Young Boys", 1750),
+    new Team("Dinamo Zagreb", 1740),
+    new Team("Slavia Prague", 1735),
+    new Team("Sparta Prague", 1730),
+    new Team("Viktoria Plzen", 1715),
+    new Team("Ferencvaros", 1705),
+    new Team("Rapid Vienna", 1695),
+
+    new Team("Sturm Graz", 1685),
+    new Team("Basel", 1680),
+    new Team("FC Zurich", 1670),
+    new Team("Austria Vienna", 1660),
+    new Team("Servette", 1650),
+    new Team("Grasshopper", 1640),
+    new Team("Legia Warsaw", 1635),
+    new Team("Lech Poznan", 1630),
+
+    new Team("Rakow Czestochowa", 1625),
+    new Team("CFR Cluj", 1620),
+    new Team("FCSB", 1615),
+    new Team("Universitatea Craiova", 1610),
+    new Team("Slovan Bratislava", 1605),
+    new Team("DAC Dunajska Streda", 1600),
+    new Team("Hajduk Split", 1595),
+    new Team("Rijeka", 1590),
+
+    new Team("Osijek", 1585),
+    new Team("Maribor", 1580),
+    new Team("Olimpija Ljubljana", 1575),
+    new Team("Banik Ostrava", 1570),
+    new Team("Debrecen", 1565),
+    new Team("Wisla Krakow", 1560),
+    new Team("Piast Gliwice", 1555),
+    new Team("Fehervar", 1550)
+};
+
+        // ITALY (16)
+
+        private static readonly List<Team> ItalyTeams = new()
+{
+    new Team("Inter Milan", 1950),
+    new Team("Juventus", 1910),
+    new Team("AC Milan", 1890),
+    new Team("Napoli", 1880),
+    new Team("Atalanta", 1860),
+    new Team("Roma", 1850),
+    new Team("Lazio", 1840),
+    new Team("Fiorentina", 1810),
+
+    new Team("Bologna", 1790),
+    new Team("Torino", 1760),
+    new Team("Udinese", 1740),
+    new Team("Sassuolo", 1730),
+    new Team("Genoa", 1700),
+    new Team("Parma", 1680),
+    new Team("Cagliari", 1670),
+    new Team("Sampdoria", 1660)
+};
+
+        // EASTERN EUROPE (16)
+
+        private static readonly List<Team> EasternEuropeTeams = new()
+{
+    new Team("Shakhtar Donetsk", 1820),
+    new Team("Zenit", 1800),
+    new Team("Dynamo Kyiv", 1780),
+    new Team("CSKA Moscow", 1760),
+    new Team("Spartak Moscow", 1750),
+    new Team("Lokomotiv Moscow", 1740),
+    new Team("Red Star Belgrade", 1730),
+    new Team("Partizan", 1710),
+
+    new Team("Ludogorets", 1700),
+    new Team("Sheriff Tiraspol", 1685),
+    new Team("Qarabag", 1675),
+    new Team("BATE Borisov", 1665),
+    new Team("Dinamo Bucharest", 1650),
+    new Team("PAOK", 1630),
+    new Team("Astana", 1620),
+    new Team("Levski Sofia", 1610)
 };
 
 
-        public static void CreateGroups(out List<Team> groupA,
-                                        out List<Team> groupB,
-                                        out List<Team> groupC,
-                                        out List<Team> groupD)
-        {
-            groupA = new List<Team> { Top4[0] };
-            Top4[0].SourceGroup = 0;
+        // SOUTH AMERICA (16)
 
-            groupB = new List<Team> { Top4[1] };
-            Top4[1].SourceGroup = 1;
+        private static readonly List<Team> SouthAmericaTeams = new()
+{
+    new Team("Palmeiras", 1940),
+    new Team("Flamengo", 1930),
+    new Team("River Plate", 1920),
+    new Team("Boca Juniors", 1910),
+    new Team("Sao Paulo", 1880),
+    new Team("Corinthians", 1870),
+    new Team("Internacional", 1860),
+    new Team("Gremio", 1850),
 
-            groupC = new List<Team> { Top4[2] };
-            Top4[2].SourceGroup = 2;
+    new Team("Racing Club", 1840),
+    new Team("Independiente", 1820),
+    new Team("San Lorenzo", 1810),
+    new Team("Atletico Nacional", 1790),
+    new Team("Colo Colo", 1780),
+    new Team("Penarol", 1770),
+    new Team("Nacional", 1760),
+    new Team("LDU Quito", 1750)
+};
 
-            groupD = new List<Team> { Top4[3] };
-            Top4[3].SourceGroup = 3;
+        // AMERICAS (8)
 
-            // Shuffle remaining pro teams
-            List<Team> shuffled = ProTeams.OrderBy(x => rng.Next()).ToList();
+        private static readonly List<Team> AmericasTeams = new()
+{
+    new Team("Club America", 1840),
+    new Team("Monterrey", 1830),
+    new Team("Tigres UANL", 1820),
+    new Team("LAFC", 1760),
+    new Team("Seattle Sounders", 1750),
+    new Team("LA Galaxy", 1730),
+    new Team("New England Revolution", 2250),
+    new Team("Inter Miami", 2230)
+};
 
-            // Round-robin distribution into 4 groups
-            int index = 0;
-            foreach (var team in shuffled)
-            {
-                switch (index)
-                {
-                    case 0: groupA.Add(team); team.SourceGroup = 0; break;
-                    case 1: groupB.Add(team); team.SourceGroup = 1; break;
-                    case 2: groupC.Add(team); team.SourceGroup = 2; break;
-                    case 3: groupD.Add(team); team.SourceGroup = 3; break;
-                }
-                index = (index + 1) % 4;
-            }
-        }
+        // EAST ASIA (8)
+
+        private static readonly List<Team> EastAsiaTeams = new()
+{
+    new Team("Kawasaki Frontale", 1740),
+    new Team("Urawa Red Diamonds", 1730),
+    new Team("Kashima Antlers", 1720),
+    new Team("Yokohama F Marinos", 1710),
+    new Team("Jeonbuk Hyundai Motors", 1700),
+    new Team("Ulsan Hyundai", 1690),
+    new Team("Shanghai Port", 1670),
+    new Team("Shandong Taishan", 1660)
+};
+
+        // MIDDLE EAST (4)
+
+        private static readonly List<Team> MiddleEastTeams = new()
+{
+    new Team("Al Hilal", 1780),
+    new Team("Al Nassr", 1750),
+    new Team("Al Ahli", 1730),
+    new Team("Al Sadd", 1710)
+};
+
+        // AFRICA (4)
+
+        private static readonly List<Team> AfricaTeams = new()
+{
+    new Team("Al Ahly", 1770),
+    new Team("Wydad Casablanca", 1740),
+    new Team("Esperance Tunis", 1730),
+    new Team("Zamalek", 1720)
+};
+
+        private static readonly List<Team> WildcardTeams = new()
+{
+    new Team("Adidas All Stars", 2100),
+    new Team("Soccer Aid", 2180),
+    new Team("Galatasaray", 1830),
+    new Team("Fenerbahce", 1820),
+    new Team("Besiktas", 1780),
+    new Team("Olympiacos", 1810),
+    new Team("Panathinaikos", 1750),
+    new Team("Maccabi Haifa", 1730)
+};
     }
 }

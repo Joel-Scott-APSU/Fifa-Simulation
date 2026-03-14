@@ -15,61 +15,63 @@ namespace Fifa_Simulation.Tournaments
 
         private readonly List<string> matchLog = new();
         private readonly HeadToHead h2h = new();
-
-        // (optional) keep if you still want to detect/avoid rematches later
         private readonly HashSet<MatchKey> played = new();
-
-        // Snapshot seeds coming INTO swiss (used as a fallback tiebreak)
         private readonly Dictionary<Team, int> swissIncomingSeed = new();
 
         public SwissTournament(List<Team> seededTeams)
         {
+            if (seededTeams == null)
+                throw new ArgumentNullException(nameof(seededTeams));
+
+            if (seededTeams.Count != 32)
+                throw new ArgumentException("SwissTournament expects 32 teams for Major 1.", nameof(seededTeams));
+
             ActiveTeams = new List<Team>(seededTeams);
 
-            // capture "incoming swiss seed" once
             foreach (var t in ActiveTeams)
+            {
                 swissIncomingSeed[t] = t.Seed;
+                t.SwissOpponents.Clear();
+            }
         }
 
         /// <summary>
-        /// Runs swiss and returns the TOP 8 reseeded (sorted) for single elimination.
-        /// Sorting:
-        ///  1) Swiss record (Wins desc, Losses asc)
-        ///  2) SOS = Sum over opponents of (opp.Wins - opp.Losses) desc
-        ///  3) H2H between tied teams (if they played) desc
-        ///  4) Opponent avg incoming seed (lower is harder schedule) asc
-        ///  5) Incoming swiss seed (lower better) asc
-        ///  6) Elo desc
+        /// Runs 32-team Swiss:
+        /// - 3 wins = advance
+        /// - 3 losses = eliminate
+        /// Returns top 16 reseeded for single elimination.
         /// </summary>
         public List<Team> Run()
         {
-            for (int round = 1; round <= 5 && AdvancedTeams.Count < 8; round++)
+            for (int round = 1; round <= 5 && AdvancedTeams.Count < 16; round++)
             {
                 var recordGroups = ActiveTeams
                     .GroupBy(t => (t.Wins, t.Losses))
+                    .OrderByDescending(g => g.Key.Wins)
+                    .ThenBy(g => g.Key.Losses)
                     .Select(g => g.OrderBy(t => t.Seed).ToList())
                     .ToList();
 
                 foreach (var group in recordGroups)
                 {
-                    if (group.Count >= 2)
-                        RunRound(PairBySeed(group), round);
+                    if (group.Count < 2)
+                        continue;
+
+                    var pairings = PairBySeedAvoidRematches(group);
+                    RunRound(pairings, round);
                 }
             }
 
-            // Return reseeded top8 for single elim
-            return GetReseededTop8();
+            SwissPlacement();
+            return GetReseededTop16();
         }
 
-        private List<Team> GetReseededTop8()
+        private List<Team> GetReseededTop16()
         {
-            // If you always stop when AdvancedTeams.Count == 8, this is safe.
-            // If not, still take best 8 by the same rules.
-            var candidates = AdvancedTeams.Count >= 8
+            var candidates = AdvancedTeams.Count >= 16
                 ? AdvancedTeams.ToList()
-                : AdvancedTeams.Concat(ActiveTeams).ToList(); // fallback if loop exits early
+                : AdvancedTeams.Concat(ActiveTeams).ToList();
 
-            // Precompute metrics
             var sos = candidates.ToDictionary(t => t, ComputeSoS);
             var oppAvgSeed = candidates.ToDictionary(t => t, ComputeOpponentAvgIncomingSeed);
 
@@ -77,14 +79,12 @@ namespace Fifa_Simulation.Tournaments
                 .OrderByDescending(t => t.Wins)
                 .ThenBy(t => t.Losses)
                 .ThenByDescending(t => sos[t])
-                // H2H is pairwise, so we apply it in a custom tie-break pass below.
-                .ThenBy(t => oppAvgSeed[t]) // lower avg opp seed = tougher schedule
+                .ThenBy(t => oppAvgSeed[t])
                 .ThenBy(t => swissIncomingSeed.TryGetValue(t, out var s) ? s : int.MaxValue)
                 .ThenByDescending(t => t.elo)
                 .ToList();
 
-            // Apply a simple H2H bubble for adjacent ties (same record + same SOS)
-            // (Good enough for 8 teams; avoids complex multi-way tie logic)
+            // Adjacent H2H correction for near-equal ties
             for (int i = 0; i < ordered.Count - 1; i++)
             {
                 var a = ordered[i];
@@ -95,48 +95,43 @@ namespace Fifa_Simulation.Tournaments
                     a.Losses == b.Losses &&
                     sos[a] == sos[b];
 
-                if (!tied) continue;
+                if (!tied)
+                    continue;
 
                 int aOverB = h2h.GetWins(a, b);
                 int bOverA = h2h.GetWins(b, a);
 
-                // If b beat a head-to-head, swap them
                 if (bOverA > aOverB)
                 {
                     ordered[i] = b;
                     ordered[i + 1] = a;
 
-                    // step back one to stabilize ordering a bit
-                    if (i > 0) i -= 2;
+                    if (i > 0)
+                        i -= 2;
                 }
             }
 
-            // Take top 8 and assign swiss seeds 1..8 for your single elim bracket
-            var top8 = ordered.Take(8).ToList();
-            for (int i = 0; i < top8.Count; i++)
-                top8[i].Seed = i + 1;
+            var top16 = ordered.Take(16).ToList();
 
-            return top8;
+            for (int i = 0; i < top16.Count; i++)
+                top16[i].Seed = i + 1;
+
+            return top16;
         }
 
-        /// <summary>
-        /// SOS = sum(opp.Wins - opp.Losses) across all opponents faced in swiss.
-        /// Uses final swiss W/L values at the end of swiss (after everyone finishes).
-        /// </summary>
         private int ComputeSoS(Team team)
         {
             int total = 0;
             foreach (var opp in team.SwissOpponents)
                 total += (opp.Wins - opp.Losses);
+
             return total;
         }
 
-        /// <summary>
-        /// Lower = harder schedule (you faced better seeds).
-        /// </summary>
         private double ComputeOpponentAvgIncomingSeed(Team team)
         {
-            if (team.SwissOpponents.Count == 0) return double.PositiveInfinity;
+            if (team.SwissOpponents.Count == 0)
+                return double.PositiveInfinity;
 
             double sum = 0;
             int n = 0;
@@ -154,21 +149,16 @@ namespace Fifa_Simulation.Tournaments
         {
             foreach (var (a, b) in pairings)
             {
-                matchLog.Add(
-                    $"R{round}: Seed {a.Seed} ({a.Wins}-{a.Losses}) vs Seed {b.Seed} ({b.Wins}-{b.Losses})"
-                );
+                matchLog.Add($"R{round}: Seed {a.Seed} ({a.Wins}-{a.Losses}) vs Seed {b.Seed} ({b.Wins}-{b.Losses})");
 
-                // Track matchup (no printing)
                 played.Add(new MatchKey(a, b));
 
                 Team winner = new Match(a, b).Play();
-                Team loser = (winner == a) ? b : a;
+                Team loser = winner == a ? b : a;
 
-                // Track "who you played"
                 a.SwissOpponents.Add(b);
                 b.SwissOpponents.Add(a);
 
-                // Track who beat who
                 h2h.RecordWin(winner, loser);
             }
 
@@ -192,17 +182,53 @@ namespace Fifa_Simulation.Tournaments
             }
         }
 
-        private static List<(Team, Team)> PairBySeed(List<Team> teams)
+        private List<(Team, Team)> PairBySeedAvoidRematches(List<Team> teams)
         {
             var ordered = teams.OrderBy(t => t.Seed).ToList();
             var pairings = new List<(Team, Team)>();
+            var used = new HashSet<Team>();
 
-            int l = 0, r = ordered.Count - 1;
-            while (l < r)
+            for (int i = 0; i < ordered.Count; i++)
             {
-                pairings.Add((ordered[l], ordered[r]));
-                l++;
-                r--;
+                var a = ordered[i];
+                if (used.Contains(a))
+                    continue;
+
+                Team opponent = null;
+
+                for (int j = ordered.Count - 1; j > i; j--)
+                {
+                    var b = ordered[j];
+                    if (used.Contains(b))
+                        continue;
+
+                    if (!played.Contains(new MatchKey(a, b)))
+                    {
+                        opponent = b;
+                        break;
+                    }
+                }
+
+                // fallback if everyone left is a rematch
+                if (opponent == null)
+                {
+                    for (int j = ordered.Count - 1; j > i; j--)
+                    {
+                        var b = ordered[j];
+                        if (!used.Contains(b))
+                        {
+                            opponent = b;
+                            break;
+                        }
+                    }
+                }
+
+                if (opponent != null)
+                {
+                    used.Add(a);
+                    used.Add(opponent);
+                    pairings.Add((a, opponent));
+                }
             }
 
             return pairings;
@@ -211,11 +237,11 @@ namespace Fifa_Simulation.Tournaments
         public void DisplaySwissResults(StreamWriter writer, List<Team> teams)
         {
             writer.WriteLine("\n--- ADVANCED FROM SWISS ---");
-            foreach (var t in teams.OrderBy(t => t.Wins).ThenBy(t => t.Losses))
+            foreach (var t in teams.OrderByDescending(t => t.Wins).ThenBy(t => t.Losses).ThenBy(t => t.Seed))
                 writer.WriteLine($"{t.name} ({t.Wins}-{t.Losses})");
 
             writer.WriteLine("\n--- ELIMINATED IN SWISS ---");
-            foreach (var t in EliminatedTeams.OrderBy(t => t.Wins).ThenBy(t => t.Losses))
+            foreach (var t in EliminatedTeams.OrderByDescending(t => t.Wins).ThenBy(t => t.Losses).ThenBy(t => t.Seed))
                 writer.WriteLine($"{t.name} ({t.Wins}-{t.Losses})");
         }
 
@@ -226,19 +252,25 @@ namespace Fifa_Simulation.Tournaments
                 writer.WriteLine(entry);
         }
 
+        /// <summary>
+        /// Placement bands for 32-team major swiss:
+        /// 0-3 => 32
+        /// 1-3 => 24
+        /// 2-3 => 16
+        /// </summary>
         public void SwissPlacement()
         {
             foreach (Team team in EliminatedTeams)
             {
-                if (team.Wins == 0) team.Seed = 15;
-                else if (team.Wins == 1) team.Seed = 12;
-                else team.Seed = 9;
+                if (team.Wins == 0)
+                    team.Seed = 32;
+                else if (team.Wins == 1)
+                    team.Seed = 24;
+                else
+                    team.Seed = 16;
             }
         }
 
-        // =========================
-        // MatchKey for rematch detection
-        // =========================
         private readonly struct MatchKey : IEquatable<MatchKey>
         {
             private readonly Team A;
@@ -248,11 +280,13 @@ namespace Fifa_Simulation.Tournaments
             {
                 if (string.CompareOrdinal(t1.name, t2.name) <= 0)
                 {
-                    A = t1; B = t2;
+                    A = t1;
+                    B = t2;
                 }
                 else
                 {
-                    A = t2; B = t1;
+                    A = t2;
+                    B = t1;
                 }
             }
 

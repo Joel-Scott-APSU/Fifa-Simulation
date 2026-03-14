@@ -67,12 +67,7 @@ namespace Fifa_Simulation.Core
 
             string finalPath = Path.Combine(folderPath, $"{baseName} {counter}{extension}");
 
-            // 3. Initialize your data
-            TeamFactory.CreateGroups(out List<Team> groupA, out List<Team> groupB, out List<Team> groupC, out List<Team> groupD);
-            var groups = new List<InitialRoundRobin> {
-        new InitialRoundRobin("Group A", groupA), new InitialRoundRobin("Group B", groupB),
-        new InitialRoundRobin("Group C", groupC), new InitialRoundRobin("Group D", groupD)
-    };
+
             var allTeams = groups.SelectMany(g => g.Teams).ToList();
 
             foreach (var team in allTeams)

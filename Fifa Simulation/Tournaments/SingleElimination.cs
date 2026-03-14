@@ -10,18 +10,22 @@ namespace Fifa_Simulation.Tournaments
     {
         private List<Team> teams;
         private readonly List<Team> finalRoundTeams = new();
-        private readonly List<Team> eliminatedTeams = new();
+        private readonly List<Team> allEliminatedTeams = new();
 
         public SingleElimination(List<Team> teams, bool reseedBeforeBracket = true)
         {
-            if (teams == null) throw new ArgumentNullException(nameof(teams));
-            if (teams.Count == 0) throw new ArgumentException("teams cannot be empty", nameof(teams));
+            if (teams == null)
+                throw new ArgumentNullException(nameof(teams));
 
-            // If you want Swiss to control seeding, pass reseedBeforeBracket=false
-            // and ensure teams already have Seed 1..N assigned.
+            if (teams.Count == 0)
+                throw new ArgumentException("teams cannot be empty", nameof(teams));
+
+            if (!IsPowerOfTwo(teams.Count))
+                throw new ArgumentException("Single elimination requires a power-of-two team count.", nameof(teams));
+
             if (reseedBeforeBracket || teams.Any(t => t.Seed <= 0))
             {
-                // Your original reseed logic (Swiss can also set Seed beforehand if you disable this)
+                // Reseed using current tournament performance / rating
                 this.teams = teams
                     .OrderByDescending(t => t.Wins)
                     .ThenBy(t => t.Losses)
@@ -29,45 +33,59 @@ namespace Fifa_Simulation.Tournaments
                     .ToList();
 
                 for (int i = 0; i < this.teams.Count; i++)
+                {
                     this.teams[i].Seed = i + 1;
+                }
             }
             else
             {
-                this.teams = teams.ToList();
+                // Respect incoming seeds
+                this.teams = teams
+                    .OrderBy(t => t.Seed)
+                    .ToList();
             }
         }
 
         public Team Run(StreamWriter writer)
         {
-            if (writer == null) throw new ArgumentNullException(nameof(writer));
+            if (writer == null)
+                throw new ArgumentNullException(nameof(writer));
 
-            int round = 1;
+            // Build bracket order ONCE. After that, preserve bracket path.
+            teams = OrderForBracket(teams);
 
             while (teams.Count > 1)
             {
-                WriteRoundHeader(writer, round, teams.Count);
+                int teamsThisRound = teams.Count;
 
-                // IMPORTANT: keep bracket structure; do NOT sort by wins/elo each round.
-                var bracketOrdered = OrderForBracket(teams);
+                WriteRoundHeader(writer, teamsThisRound);
 
-                teams = PlayRound(bracketOrdered, writer);
-
-                // Assign placement-based "Seed" for points AFTER the round completes
-                foreach (Team team in eliminatedTeams)
+                if (teamsThisRound == 2)
                 {
-                    if (round == 1) team.Seed = 8;      // QF losers
-                    else if (round == 2) team.Seed = 4; // SF losers
-                    else team.Seed = 2;                 // Final loser
+                    finalRoundTeams.Clear();
+                    finalRoundTeams.AddRange(teams);
                 }
 
-                eliminatedTeams.Clear();
-                round++;
+                List<Team> roundEliminated = new();
+                teams = PlayRound(teams, writer, roundEliminated);
+
+                foreach (Team team in roundEliminated)
+                {
+                    // Placement band based on round lost:
+                    // lose in 16-team round => Seed = 16
+                    // lose in 8-team round  => Seed = 8
+                    // lose in 4-team round  => Seed = 4
+                    // lose in 2-team round  => Seed = 2
+                    team.Seed = teamsThisRound;
+                }
+
+                allEliminatedTeams.AddRange(roundEliminated);
             }
 
             if (teams.Count == 1)
             {
-                teams[0].Seed = 1; // Champion points
-                writer.WriteLine($"\n  WINNER: {teams[0].name}");
+                teams[0].Seed = 1;
+                writer.WriteLine($"\nWINNER: {teams[0].name}");
                 return teams[0];
             }
 
@@ -77,88 +95,120 @@ namespace Fifa_Simulation.Tournaments
 
         public List<Team> GetFinalists()
         {
-            return finalRoundTeams.Count >= 2
-                ? finalRoundTeams.Take(2).ToList()
-                : new List<Team>(teams);
+            return new List<Team>(finalRoundTeams);
         }
 
-        private List<Team> PlayRound(List<Team> bracketOrdered, StreamWriter writer)
+        public List<Team> GetEliminated()
         {
-            var winners = new List<Team>();
-
-            // Pair adjacent in bracket order: (0,1), (2,3), ...
-            for (int i = 0; i < bracketOrdered.Count; i += 2)
-            {
-                Team a = bracketOrdered[i];
-                Team b = bracketOrdered[i + 1];
-
-                Team winner = new Helpers.Match(a, b).Play();
-                Team loser = (winner == a) ? b : a;
-
-                writer.WriteLine($"{a.name} vs {b.name} --- Winner {winner.name}");
-
-                winners.Add(winner);
-                eliminatedTeams.Add(loser);
-            }
-
-            // Track teams that reached the final round (last round that has <=2 winners)
-            if (winners.Count <= 2)
-            {
-                finalRoundTeams.Clear();
-                finalRoundTeams.AddRange(winners);
-            }
-
-            // Winners stay in bracket order (no reseed)
-            return winners;
+            return new List<Team>(allEliminatedTeams);
         }
 
-        /// <summary>
-        /// For 8 teams: forces standard bracket so 1 & 2 are on opposite sides:
-        /// QF: 1v8, 4v5, 3v6, 2v7
-        /// After that, bracket order is preserved.
-        /// </summary>
-        private static List<Team> OrderForBracket(List<Team> roundTeams)
+        public List<Team> GetOrderedFinish()
         {
-            // Always use current Seed values for ordering
-            var bySeed = roundTeams.OrderBy(t => t.Seed).ToList();
-
-            if (bySeed.Count == 8)
-            {
-                // [1,8,4,5,3,6,2,7] -> QF: (1,8)(4,5)(3,6)(2,7)
-                return new List<Team>
-                {
-                    bySeed[0], bySeed[7],
-                    bySeed[3], bySeed[4],
-                    bySeed[2], bySeed[5],
-                    bySeed[1], bySeed[6]
-                };
-            }
-
-            // Generic fallback: 1vN, 2v(N-1), 3v(N-2)...
-            // (This still keeps top seeds apart reasonably, but it's not the exact "true bracket" layout.)
             var ordered = new List<Team>();
-            int l = 0, r = bySeed.Count - 1;
-            while (l < r)
-            {
-                ordered.Add(bySeed[l++]);
-                ordered.Add(bySeed[r--]);
-            }
 
-            if (l == r)
-                ordered.Add(bySeed[l]); // should not happen for your 8-team case
+            if (teams.Count == 1)
+                ordered.Add(teams[0]); // Winner
+
+            // Final loser should already have Seed = 2, SF losers = 4, etc.
+            ordered.AddRange(allEliminatedTeams
+                .OrderBy(t => t.Seed)
+                .ThenByDescending(t => t.elo));
 
             return ordered;
         }
 
-        private static void WriteRoundHeader(StreamWriter writer, int round, int teamCount)
+        private static List<Team> PlayRound(List<Team> roundTeams, StreamWriter writer, List<Team> roundEliminated)
         {
-            // For 8 teams: round 1=QF, 2=SF, 3=F
-            if (teamCount == 8) writer.WriteLine("\nQuarterfinals\n----------------------------------");
-            else if (teamCount == 4) writer.WriteLine("\nSemifinals\n----------------------------------");
-            else if (teamCount == 2) writer.WriteLine("\nFinals\n----------------------------------");
-            else writer.WriteLine($"\nRound {round}\n----------------------------------");
+            var winners = new List<Team>();
+
+            for (int i = 0; i < roundTeams.Count; i += 2)
+            {
+                Team a = roundTeams[i];
+                Team b = roundTeams[i + 1];
+
+                Team winner = new Helpers.Match(a, b).Play();
+                Team loser = winner == a ? b : a;
+
+                writer.WriteLine($"{a.name} vs {b.name} --- Winner: {winner.name}");
+
+                winners.Add(winner);
+                roundEliminated.Add(loser);
+            }
+
+            return winners;
         }
 
-        public List<Team> GetEliminated() => eliminatedTeams;
+        private static List<Team> OrderForBracket(List<Team> roundTeams)
+        {
+            var bySeed = roundTeams
+                .OrderBy(t => t.Seed)
+                .ToList();
+
+            int count = bySeed.Count;
+            int[] positions = BuildBracketSeedOrder(count);
+
+            var ordered = new List<Team>(count);
+
+            foreach (int seedNumber in positions)
+            {
+                ordered.Add(bySeed[seedNumber - 1]);
+            }
+
+            return ordered;
+        }
+
+        /// <summary>
+        /// Builds standard bracket seed order for any power-of-two size.
+        /// Example:
+        /// 2  => [1,2]
+        /// 4  => [1,4,2,3]
+        /// 8  => [1,8,4,5,2,7,3,6]
+        /// 16 => [1,16,8,9,4,13,5,12,2,15,7,10,3,14,6,11]
+        /// </summary>
+        private static int[] BuildBracketSeedOrder(int size)
+        {
+            if (!IsPowerOfTwo(size))
+                throw new ArgumentException("Bracket size must be a power of two.", nameof(size));
+
+            List<int> seeds = new() { 1, 2 };
+
+            while (seeds.Count < size)
+            {
+                int nextSize = seeds.Count * 2 + 1;
+                var expanded = new List<int>(seeds.Count * 2);
+
+                foreach (int seed in seeds)
+                {
+                    expanded.Add(seed);
+                    expanded.Add(nextSize - seed);
+                }
+
+                seeds = expanded;
+            }
+
+            return seeds.ToArray();
+        }
+
+        private static void WriteRoundHeader(StreamWriter writer, int teamCount)
+        {
+            string title = teamCount switch
+            {
+                64 => "Round of 64",
+                32 => "Round of 32",
+                16 => "Round of 16",
+                8 => "Quarterfinals",
+                4 => "Semifinals",
+                2 => "Final",
+                _ => $"Round with {teamCount} teams"
+            };
+
+            writer.WriteLine($"\n{title}\n----------------------------------");
+        }
+
+        private static bool IsPowerOfTwo(int value)
+        {
+            return value > 0 && (value & (value - 1)) == 0;
+        }
     }
 }

@@ -8,209 +8,189 @@ using System.Linq;
 
 namespace Fifa_Simulation.Groups
 {
-    public class Groups
+    public class Groups32
     {
-        private readonly HeadToHead h2h = new();
-
-        // The reseeded top16
-        private readonly List<Team> top16;
-
-        // 4 new groups of 4 teams each
+        private List<Team> qualifiedTeams;
         private readonly List<List<Team>> groupsOf4;
 
-        public Groups(List<InitialRoundRobin> initialGroups)
+        public Groups32(List<InitialRoundRobin> initialGroups)
         {
-            if (initialGroups == null) throw new ArgumentNullException(nameof(initialGroups));
+            if (initialGroups == null)
+                throw new ArgumentNullException(nameof(initialGroups));
 
-            // 1) Build top16: top 4 from each initial group
-            top16 = initialGroups
+            qualifiedTeams = initialGroups
                 .SelectMany(g => g.GetStandings().Take(4))
                 .ToList();
 
-            if (top16.Count != 16)
-                throw new InvalidOperationException($"Expected 16 qualified teams, got {top16.Count}. Check your group sizes / Take(4).");
+            if (qualifiedTeams.Count != 32)
+                throw new InvalidOperationException($"Expected 32 qualified teams, got {qualifiedTeams.Count}.");
 
-            // 2) Rank top16 for new seeding (record then Elo; add more tiebreakers if you want)
-            top16 = top16
+            qualifiedTeams = qualifiedTeams
                 .OrderByDescending(t => t.Wins)
                 .ThenBy(t => t.Losses)
                 .ThenByDescending(t => t.Points)
                 .ThenByDescending(t => t.elo)
                 .ToList();
 
-            // 3) Assign seeds 1..16 for reseeding
-            for (int i = 0; i < top16.Count; i++)
-                top16[i].Seed = i + 1;
+            for (int i = 0; i < qualifiedTeams.Count; i++)
+                qualifiedTeams[i].Seed = i + 1;
 
-            // 4) Create balanced groups of 4
-            groupsOf4 = BuildSeededGroupsWithPots(top16);
+            groupsOf4 = BuildSeededGroupsWithPots(qualifiedTeams);
         }
-
 
         public void RunAndFinish(StreamWriter writer, int sim)
         {
-            var top8 = new List<Team>();
-            var all16 = new List<Team>();
+            if (writer == null)
+                throw new ArgumentNullException(nameof(writer));
 
-            var groupWinners = new Team[4];
-            var groupRunners = new Team[4];
+            var advancingTeams = new List<Team>();
+            var all32 = new List<Team>();
 
-            // Snapshot the "seed coming in" before any elimination/points seed overwrites.
-            // (This is important because later you set Seed=9/16 for points.)
+            var groupWinners = new Team[8];
+            var groupRunners = new Team[8];
             var incomingSeed = new Dictionary<Team, int>();
 
-            writer.WriteLine("\n================ RESEEDED GROUP STAGE ================");
+            writer.WriteLine("\n================ 32-TEAM MAJOR GROUP STAGE ================");
 
-            Console.WriteLine($"All 16 count: {all16.Count}");
-            foreach(var team in all16)
-            {
-                Console.WriteLine($"{team.name} {team.Seed} {team.Wins} {team.Losses}");
-            }
             for (int gi = 0; gi < groupsOf4.Count; gi++)
             {
                 var group = groupsOf4[gi];
                 string groupName = ((char)('A' + gi)).ToString();
+                var h2h = new HeadToHead();
 
-                // record incoming seeds once (these are the reseed 1..16 values)
                 foreach (var t in group)
+                {
                     if (!incomingSeed.ContainsKey(t))
                         incomingSeed[t] = t.Seed;
 
-                // reset for this stage
-                foreach (var t in group)
                     t.resetRecord();
+                }
 
                 writer.WriteLine($"\n=== GROUP {groupName} ===");
+                PrintGroupRoster(group, writer);
 
-                // single round robin
                 for (int i = 0; i < group.Count; i++)
                 {
                     for (int j = i + 1; j < group.Count; j++)
-                        PlaySingleMatch(group[i], group[j], writer);
+                    {
+                        PlaySingleMatch(group[i], group[j], writer, h2h);
+                    }
                 }
 
-                var standings = GetStandingsWithH2H(group);
+                var standings = GetStandingsWithH2H(group, h2h);
                 PrintStandings(groupName, standings, writer);
 
-                // Save winner/runner for fixed QF mapping later
                 groupWinners[gi] = standings[0];
                 groupRunners[gi] = standings[1];
 
-                // Top 2 advance
-                top8.Add(standings[0]);
-                top8.Add(standings[1]);
+                advancingTeams.Add(standings[0]);
+                advancingTeams.Add(standings[1]);
 
-                // Group placements for points:
-                standings[2].Seed = 9;   // 3rd -> Top9 points
-                standings[3].Seed = 16;  // 4th -> Top16 points
+                // Group-stage non-qualifiers
+                standings[2].Seed = 24; // 17-24
+                standings[3].Seed = 32; // 25-32
 
-                all16.AddRange(standings);
+                all32.AddRange(standings);
             }
 
-            // Rank group winners 1..4 by (group record) then (incoming seed)
-            // This ranking isn't required for your fixed mapping, but you asked for it.
             var rankedWinners = groupWinners
                 .OrderByDescending(t => t.Wins)
                 .ThenBy(t => t.Losses)
-                .ThenBy(t => incomingSeed[t])  // seed coming in
+                .ThenBy(t => incomingSeed[t])
                 .ToList();
 
+            var rankedRunners = groupRunners
+                .OrderByDescending(t => t.Wins)
+                .ThenBy(t => t.Losses)
+                .ThenBy(t => incomingSeed[t])
+                .ToList();
+
+            writer.WriteLine("\n================ GROUP WINNERS RANKING ================");
             for (int i = 0; i < rankedWinners.Count; i++)
-            {
-                var t = rankedWinners[i];
-            }
+                writer.WriteLine($"{i + 1}. {rankedWinners[i].name} (Incoming Seed {incomingSeed[rankedWinners[i]]})");
 
-            // Reset records for the knockout stage (so bracket isn't affected by group W/L)
-            foreach (var t in top8)
+            writer.WriteLine("\n================ GROUP RUNNERS-UP RANKING ================");
+            for (int i = 0; i < rankedRunners.Count; i++)
+                writer.WriteLine($"{i + 1}. {rankedRunners[i].name} (Incoming Seed {incomingSeed[rankedRunners[i]]})");
+
+            foreach (var t in advancingTeams)
                 t.resetRecord();
 
-            Console.WriteLine(top8.Count);
+            writer.WriteLine("\n================ 16-TEAM SINGLE ELIM STAGE ================");
 
-            var qfPairings = new List<(Team A, Team B)>
-    {
-        (groupWinners[0], groupRunners[3]), // A1 vs D2
-        (groupWinners[1], groupRunners[2]), // B1 vs C2
-        (groupWinners[2], groupRunners[1]), // C1 vs B2
-        (groupWinners[3], groupRunners[0])  // D1 vs A2
-    };
-
-            var qfWinners = new List<Team>();
-
-            Console.WriteLine(qfPairings.Count);
-            writer.WriteLine("\n================ KNOCKOUT STAGE ================");
-            writer.WriteLine("\nQUARTERFINALS\n----------------------------------");
-            foreach (var (a, b) in qfPairings)
+            // Fixed Round of 16 mapping:
+            // A1 vs H2, B1 vs G2, C1 vs F2, D1 vs E2, E1 vs D2, F1 vs C2, G1 vs B2, H1 vs A2
+            var r16Slots = new List<Team>
             {
-                var winner = new Match(a, b).Play();
-                var loser = (winner == a) ? b : a;
+                groupWinners[0], groupRunners[7],
+                groupWinners[1], groupRunners[6],
+                groupWinners[2], groupRunners[5],
+                groupWinners[3], groupRunners[4],
+                groupWinners[4], groupRunners[3],
+                groupWinners[5], groupRunners[2],
+                groupWinners[6], groupRunners[1],
+                groupWinners[7], groupRunners[0]
+            };
 
-                writer.WriteLine($"{a.name} vs {b.name} --- Winner {winner.name}");
+            // Lock bracket path
+            for (int i = 0; i < r16Slots.Count; i++)
+                r16Slots[i].Seed = i + 1;
 
-                // QF losers are Top8
-                loser.Seed = 8;
-
-                qfWinners.Add(winner);
-            }
-
-            // Now finish with your existing SingleElimination on the 4 winners (semis/finals)
-            foreach (var t in qfWinners)
-                t.resetRecord();
-
-            var elim = new SingleElimination(qfWinners);
-            Team champ = elim.Run(writer);
+            var singleElim = new SingleElimination(r16Slots, reseedBeforeBracket: false);
+            Team champ = singleElim.Run(writer);
 
             if (champ != null)
-                champ.Seed = 1; // ensure winner gets winner points
+                champ.Seed = 1;
 
-            // Award points to everyone in this stage
-            foreach (var t in all16)
-                PointsAwarder.AwardPoints(t, sim);
+            foreach (var t in all32)
+                PointsAwarder.Award32TeamRegionPoints(t, sim);
         }
 
-        /// <summary>
-        /// Your linear "representation" builder: each new group tries to include unique SourceGroup values.
-        /// Assumes teams are already seeded 1..16 and SourceGroup is set.
-        /// </summary>
-        private static List<List<Team>> BuildSeededGroupsWithPots(List<Team> rankedTop16, bool shuffleWithinPots = false)
+        private static List<List<Team>> BuildSeededGroupsWithPots(List<Team> rankedTop32, bool shuffleWithinPots = false)
         {
-            var ordered = rankedTop16.OrderBy(t => t.Seed).ToList(); // Seed 1..16
+            var ordered = rankedTop32
+                .OrderBy(t => t.Seed)
+                .ToList();
 
-            var pot1 = ordered.Take(4).ToList();          // 1-4
-            var pot2 = ordered.Skip(4).Take(4).ToList();  // 5-8
-            var pot3 = ordered.Skip(8).Take(4).ToList();  // 9-12
-            var pot4 = ordered.Skip(12).Take(4).ToList(); // 13-16
+            var pots = new List<List<Team>>
+            {
+                ordered.Take(8).ToList(),
+                ordered.Skip(8).Take(8).ToList(),
+                ordered.Skip(16).Take(8).ToList(),
+                ordered.Skip(24).Take(8).ToList()
+            };
 
             if (shuffleWithinPots)
             {
                 var rng = new Random();
-                pot1 = pot1.OrderBy(_ => rng.Next()).ToList();
-                pot2 = pot2.OrderBy(_ => rng.Next()).ToList();
-                pot3 = pot3.OrderBy(_ => rng.Next()).ToList();
-                pot4 = pot4.OrderBy(_ => rng.Next()).ToList();
+                for (int i = 0; i < pots.Count; i++)
+                    pots[i] = pots[i].OrderBy(_ => rng.Next()).ToList();
             }
 
-            var groupA = new List<Team>(4);
-            var groupB = new List<Team>(4);
-            var groupC = new List<Team>(4);
-            var groupD = new List<Team>(4);
+            var groups = new List<List<Team>>();
+            for (int i = 0; i < 8; i++)
+                groups.Add(new List<Team>(4));
 
-            // Snake distribution:
-            // Pot1: A B C D
-            groupA.Add(pot1[0]); groupB.Add(pot1[1]); groupC.Add(pot1[2]); groupD.Add(pot1[3]);
+            // Pot 1: A B C D E F G H
+            for (int i = 0; i < 8; i++)
+                groups[i].Add(pots[0][i]);
 
-            // Pot2: D C B A
-            groupD.Add(pot2[0]); groupC.Add(pot2[1]); groupB.Add(pot2[2]); groupA.Add(pot2[3]);
+            // Pot 2: H G F E D C B A
+            for (int i = 0; i < 8; i++)
+                groups[7 - i].Add(pots[1][i]);
 
-            // Pot3: A B C D
-            groupA.Add(pot3[0]); groupB.Add(pot3[1]); groupC.Add(pot3[2]); groupD.Add(pot3[3]);
+            // Pot 3: A B C D E F G H
+            for (int i = 0; i < 8; i++)
+                groups[i].Add(pots[2][i]);
 
-            // Pot4: D C B A
-            groupD.Add(pot4[0]); groupC.Add(pot4[1]); groupB.Add(pot4[2]); groupA.Add(pot4[3]);
+            // Pot 4: H G F E D C B A
+            for (int i = 0; i < 8; i++)
+                groups[7 - i].Add(pots[3][i]);
 
-            return new List<List<Team>> { groupA, groupB, groupC, groupD };
+            return groups;
         }
 
-        private void PlaySingleMatch(Team a, Team b, TextWriter writer)
+        private static void PlaySingleMatch(Team a, Team b, TextWriter writer, HeadToHead h2h)
         {
             Team winner = new Match(a, b).Play();
             Team loser = winner == a ? b : a;
@@ -219,27 +199,20 @@ namespace Fifa_Simulation.Groups
             writer.WriteLine($"{a.name} vs {b.name} --- {winner.name}");
         }
 
-        /// <summary>
-        /// Standings tie-break: Wins desc -> H2H -> Seed asc
-        /// Note: H2H is best for 2-team ties; for 3+ way ties it’s a simple pairwise tie-break.
-        /// </summary>
-        private List<Team> GetStandingsWithH2H(List<Team> group)
+        private static List<Team> GetStandingsWithH2H(List<Team> group, HeadToHead h2h)
         {
             var list = group.ToList();
 
             list.Sort((a, b) =>
             {
-                // 1) Wins
                 int cmp = b.Wins.CompareTo(a.Wins);
                 if (cmp != 0) return cmp;
 
-                // 2) Head-to-head (a vs b)
                 int aOverB = h2h.GetWins(a, b);
                 int bOverA = h2h.GetWins(b, a);
                 if (aOverB != bOverA)
-                    return bOverA.CompareTo(aOverB); // more H2H wins ranks higher
+                    return bOverA.CompareTo(aOverB);
 
-                // 3) Seed coming in (lower is better)
                 return a.Seed.CompareTo(b.Seed);
             });
 
@@ -251,6 +224,7 @@ namespace Fifa_Simulation.Groups
             writer.WriteLine("Teams:");
             foreach (var t in group.OrderBy(t => t.Seed))
                 writer.WriteLine($" - Seed {t.Seed}: {t.name} (Src:{t.SourceGroup}, Elo:{t.elo})");
+
             writer.WriteLine();
         }
 
@@ -265,7 +239,9 @@ namespace Fifa_Simulation.Groups
             }
         }
 
-        // Optional: expose groups if you want to use them later
-        public List<List<Team>> GetGroups() => groupsOf4.Select(g => g.ToList()).ToList();
+        public List<List<Team>> GetGroups()
+        {
+            return groupsOf4.Select(g => g.ToList()).ToList();
+        }
     }
 }
