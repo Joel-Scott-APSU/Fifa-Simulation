@@ -25,9 +25,6 @@ namespace Fifa_Simulation.Groups
                 {
                     // Match 1: i home, j away
                     new Helpers.Match(Teams[i], Teams[j]).Play();
-
-                    // Match 2: j home, i away
-                    new Helpers.Match(Teams[j], Teams[i]).Play();
                 }
             }
         }

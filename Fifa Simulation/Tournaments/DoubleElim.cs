@@ -64,11 +64,11 @@ namespace Fifa_Simulation.Tournaments
             LowerRound++;
 
             // UB Final
-            w.WriteLine("Upper Finals");
+            w.WriteLine("Upper Finals\n---------------------------------");
             upperBracket = PlayUpperBracket(upperBracket, w);
 
             // LB Final
-            w.WriteLine("Lower Finals");
+            w.WriteLine("Lower Finals\n---------------------------------");
             lowerBracket = PlayLowerBracket(lowerBracket, w);
             LowerRound++;
 
@@ -81,7 +81,7 @@ namespace Fifa_Simulation.Tournaments
         {
             if(UpperRound != 4)
             {
-                w.WriteLine($"Upper Round {UpperRound}");
+                w.WriteLine($"Upper Round {UpperRound}\n---------------------------------");
             }
             var winners = new List<Team>();
 
@@ -108,7 +108,7 @@ namespace Fifa_Simulation.Tournaments
         {
             if(LowerRound != 6)
             {
-                streamWriter.WriteLine($"Lower Round {LowerRound}");
+                streamWriter.WriteLine($"Lower Round {LowerRound}\n---------------------------------");
             }
 
             var winners = new List<Team>();

@@ -25,43 +25,49 @@ namespace Fifa_Simulation.Tournaments
             for (int sim = 0; sim < 3; sim++)
             {
                 writer.WriteLine($"\n================ SIMULATION {sim + 1} ================");
-                ResetWinsAndLosses();
                 RunGroupStage(writer);
                 List<Team> seeded = Seeder.SeedTopTeams(groups);
-                foreach (Team team in allTeams)
-                {
-                    team.resetRecord();
-                }
 
-                if (sim == 0)
+                if (sim == 2)
                 {
-                    SwissTournament swiss = new(seeded);
-                    swiss.Run();
-                    swiss.DisplaySwissResults(writer);
-                    swiss.SwissPlacement();
-
-                    SingleElimination elim = new(swiss.AdvancedTeams);
-                    Team winner = elim.Run(writer);
-
-                    winner.Seed = 1;
-                    foreach (Team team in seeded)
-                    {
-                        PointsAwarder.AwardPoints(team, sim);
-                    }
-                }
-                else if (sim == 1)
-                {
-                    DoubleElim doubleElim = new(seeded);
-                    doubleElim.Run(writer);
-                    foreach (Team team in seeded)
-                    {
-                        PointsAwarder.AwardPoints(team, sim);
-                    }
-                }
-                else if (sim == 2)
-                {
-                    Groups.Groups group = new(groups);
+                    Groups.Groups group = new(groups);   // <-- construct BEFORE resetRecord
+                    foreach (Team team in allTeams) team.resetRecord(); // reset for stage play
                     group.RunAndFinish(writer, sim);
+                }
+                else
+                {
+                    foreach (Team team in allTeams) team.resetRecord();
+
+                    if (sim == 0)
+                    {
+                        SwissTournament swiss = new(seeded);
+                        List<Team> top8 = swiss.Run();
+                        swiss.DisplaySwissResults(writer, top8);
+
+                        writer.WriteLine("================== TOP 8 ================");
+                        SingleElimination elim = new(top8);
+                        Team winner = elim.Run(writer);
+
+                        winner.Seed = 1;
+                        foreach (Team team in seeded)
+                            PointsAwarder.AwardPoints(team, sim);
+                        foreach(Team team in allTeams)
+                        {
+                            team.resetRecord();
+                        }
+                       
+                    }
+                    else if (sim == 1)
+                    {
+                        DoubleElim doubleElim = new(seeded);
+                        doubleElim.Run(writer);
+                        foreach (Team team in seeded)
+                            PointsAwarder.AwardPoints(team, sim);
+                        foreach (Team team in allTeams)
+                        {
+                            team.resetRecord();
+                        }
+                    }
                 }
             }
 

@@ -34,6 +34,7 @@ namespace Fifa_Simulation.Groups
             top16 = top16
                 .OrderByDescending(t => t.Wins)
                 .ThenBy(t => t.Losses)
+                .ThenByDescending(t => t.Points)
                 .ThenByDescending(t => t.elo)
                 .ToList();
 
@@ -60,6 +61,11 @@ namespace Fifa_Simulation.Groups
 
             writer.WriteLine("\n================ RESEEDED GROUP STAGE ================");
 
+            Console.WriteLine($"All 16 count: {all16.Count}");
+            foreach(var team in all16)
+            {
+                Console.WriteLine($"{team.name} {team.Seed} {team.Wins} {team.Losses}");
+            }
             for (int gi = 0; gi < groupsOf4.Count; gi++)
             {
                 var group = groupsOf4[gi];
@@ -118,9 +124,7 @@ namespace Fifa_Simulation.Groups
             foreach (var t in top8)
                 t.resetRecord();
 
-            // Quarterfinals with your fixed cross-group mapping:
-            // A1 vs D2, B1 vs C2, C1 vs B2, D1 vs A2
-            writer.WriteLine("\n================ TOP 8 SINGLE ELIM ================");
+            Console.WriteLine(top8.Count);
 
             var qfPairings = new List<(Team A, Team B)>
     {
@@ -132,6 +136,9 @@ namespace Fifa_Simulation.Groups
 
             var qfWinners = new List<Team>();
 
+            Console.WriteLine(qfPairings.Count);
+            writer.WriteLine("\n================ KNOCKOUT STAGE ================");
+            writer.WriteLine("\nQUARTERFINALS\n----------------------------------");
             foreach (var (a, b) in qfPairings)
             {
                 var winner = new Match(a, b).Play();

@@ -9,7 +9,7 @@ namespace Fifa_Simulation.Core
     class Program
     {
         static void Main()
-        {
+        { 
             Console.WriteLine("1 - Full FIFA Simulation");
             Console.WriteLine("2 - Individual Match Test");
             Console.Write("Select mode: ");
@@ -19,11 +19,14 @@ namespace Fifa_Simulation.Core
             switch (input)
             {
                 case "1":
-                    RunFifaSimulation();
+                    for (int i = 0; i < 5; i++)
+                    {
+                        RunFifaSimulation();
+                    }
                     break;
 
                 case "2":
-                    RunIndividualMatch();
+                    //RunIndividualMatch();
                     break;
 
                 default:
@@ -72,13 +75,16 @@ namespace Fifa_Simulation.Core
     };
             var allTeams = groups.SelectMany(g => g.Teams).ToList();
 
+            foreach (var team in allTeams)
+            {
+                team.resetRecord();
+            }
             // 4. Wrap everything in the StreamWriter
             using (StreamWriter sw = new StreamWriter(finalPath))
             {
                 // Redirect simulation output to the file
                 Tournament tournament = new Tournament(groups, allTeams);
 
-                // IMPORTANT: You must update these methods to accept 'sw' as an argument!
                 var top16 = tournament.RunThreeSimulations(sw);
 
                 var finals = new FinalsTournament(top16);
@@ -90,7 +96,7 @@ namespace Fifa_Simulation.Core
             Console.ReadLine();
         }
 
-        static void RunIndividualMatch()
+       /* static void RunIndividualMatch()
         {
             Team team1 = new Team("Inter Miami", 2180, 0.84);
             Team team2 = new Team("Liverpool", 2016, 0.77);
@@ -105,6 +111,6 @@ namespace Fifa_Simulation.Core
             Match match2 = new Match(winner, winner1);
             Console.WriteLine($"Final Winner: {match2.Play().name}");
 
-        }
+        }*/
     }
 }

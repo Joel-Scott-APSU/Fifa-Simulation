@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Fifa_Simulation.Helpers;
 
 namespace Fifa_Simulation.Tournaments
 {
@@ -54,7 +55,7 @@ namespace Fifa_Simulation.Tournaments
                 Team a = upperBracket[i];
                 Team b = upperBracket[i + 1];
 
-                Team winner = new Helpers.Match(a, b).Play();
+                Team winner = new Match(a, b).Play();
                 Team loser = winner == a ? b : a;
 
                 upperWinners.Add(winner);
@@ -71,7 +72,7 @@ namespace Fifa_Simulation.Tournaments
                 Team a = lowerBracket[i];
                 Team b = lowerBracket[i + 1];
 
-                Team winner = new Helpers.Match(a, b).Play();
+                Team winner = new Match(a, b).Play();
                 lowerWinners.Add(winner);
 
                 writer.WriteLine($"Lower Bracket: {a.name} vs {b.name} --- Winner: {winner.name}");
@@ -85,10 +86,10 @@ namespace Fifa_Simulation.Tournaments
                 Team a = upperLosers[i];
                 Team b = lowerWinners[i];
 
-                Team winner = new Helpers.  Match(a, b).Play();
+                Team winner = PlayBestOf(a, b, 3, writer);
                 quarterFinalists.Add(winner);
 
-                writer.WriteLine($"Quarterfinal: {a.name} vs {b.name} --- Winner: {winner.name}");
+                writer.WriteLine($"Quarterfinal Winner: {winner.name}\n");
             }
 
             // 🔥 SEMIFINALS — BEST OF 3
