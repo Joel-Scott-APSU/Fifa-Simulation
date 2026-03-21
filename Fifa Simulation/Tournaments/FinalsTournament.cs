@@ -9,6 +9,7 @@ namespace Fifa_Simulation.Tournaments
     public class FinalsTournament
     {
         List<FinalsGroup> groups = new();
+        private List<Team> top4 = new List<Team>(4);
         public FinalsTournament(List<Team> top16)
         {
             int seed = 1;
@@ -28,7 +29,7 @@ namespace Fifa_Simulation.Tournaments
             };
         }
 
-        public void Run(StreamWriter writer)
+        public List<Team> Run(StreamWriter writer)
         {
             writer.WriteLine("\n========== FINALS ==========");
 
@@ -93,16 +94,21 @@ namespace Fifa_Simulation.Tournaments
             }
 
             // 🔥 SEMIFINALS — BEST OF 3
-            writer.WriteLine("\n--- SEMIFINALS (BEST OF 3) ---\n----------------------------------------");
+            writer.WriteLine("\n--- SEMIFINALS (BEST OF 5) ---\n----------------------------------------");
 
             List<Team> semiFinalWinners = new();
+            List<Team> semifinalLosers = new();
+
             for (int i = 0; i < 2; i++)
             {
                 Team a = upperWinners[i];
                 Team b = quarterFinalists[i];
 
-                Team winner = PlayBestOf(a, b, 3, writer);
+                Team winner = PlayBestOf(a, b, 5, writer);
+                Team loser = winner == a ? b : a;
+
                 semiFinalWinners.Add(winner);
+                semifinalLosers.Add(loser);
 
                 writer.WriteLine($"Semifinal Winner: {winner.name}\n");
             }
@@ -112,6 +118,14 @@ namespace Fifa_Simulation.Tournaments
 
             Team champion = PlayBestOf(semiFinalWinners[0], semiFinalWinners[1], 5, writer);
             writer.WriteLine($"\nCHAMPION: {champion.name}");
+
+            Team second = champion == semiFinalWinners[0] ? semiFinalWinners[1] : semiFinalWinners[0];
+
+            top4.Add(champion);
+            top4.Add(second);
+            top4.AddRange(semifinalLosers);
+
+            return top4;
         }
 
         // =========================

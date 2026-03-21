@@ -14,7 +14,7 @@ namespace Fifa_Simulation.Tournaments
             writer.WriteLine("\n================ FINAL POINT STANDINGS ================");
 
             var top16 = teams
-                .OrderByDescending(t => t.Points)
+                .OrderByDescending(t => t.TotalPoints)
                 .ThenByDescending(t => t.elo)
                 .Take(16)
                 .ToList();
@@ -23,7 +23,7 @@ namespace Fifa_Simulation.Tournaments
             foreach (var team in top16)
             {
                 writer.WriteLine(
-                    $"{rank}. {team.name} Points:{team.Points}"
+                    $"{rank}. {team.name} Points:{team.TotalPoints}"
                 );
                 rank++;
             }

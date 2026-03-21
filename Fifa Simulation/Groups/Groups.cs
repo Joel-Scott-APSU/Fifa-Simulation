@@ -10,41 +10,32 @@ namespace Fifa_Simulation.Groups
 {
     public class Groups32
     {
-        private List<Team> qualifiedTeams;
+        private readonly List<Team> qualifiedTeams;
         private readonly List<List<Team>> groupsOf4;
 
-        public Groups32(List<InitialRoundRobin> initialGroups)
+        public Groups32(List<Team> seededTeams)
         {
-            if (initialGroups == null)
-                throw new ArgumentNullException(nameof(initialGroups));
+            if (seededTeams == null)
+                throw new ArgumentNullException(nameof(seededTeams));
 
-            qualifiedTeams = initialGroups
-                .SelectMany(g => g.GetStandings().Take(4))
+            if (seededTeams.Count != 32)
+                throw new InvalidOperationException($"Expected 32 seeded teams, got {seededTeams.Count}.");
+
+            qualifiedTeams = seededTeams
+                .OrderBy(t => t.Seed)
                 .ToList();
-
-            if (qualifiedTeams.Count != 32)
-                throw new InvalidOperationException($"Expected 32 qualified teams, got {qualifiedTeams.Count}.");
-
-            qualifiedTeams = qualifiedTeams
-                .OrderByDescending(t => t.Wins)
-                .ThenBy(t => t.Losses)
-                .ThenByDescending(t => t.Points)
-                .ThenByDescending(t => t.elo)
-                .ToList();
-
-            for (int i = 0; i < qualifiedTeams.Count; i++)
-                qualifiedTeams[i].Seed = i + 1;
 
             groupsOf4 = BuildSeededGroupsWithPots(qualifiedTeams);
         }
 
-        public void RunAndFinish(StreamWriter writer, int sim)
+        public List<Team> RunAndFinish(StreamWriter writer, int sim)
         {
             if (writer == null)
                 throw new ArgumentNullException(nameof(writer));
 
             var advancingTeams = new List<Team>();
-            var all32 = new List<Team>();
+            var thirdPlaceTeams = new List<Team>();
+            var fourthPlaceTeams = new List<Team>();
 
             var groupWinners = new Team[8];
             var groupRunners = new Team[8];
@@ -58,12 +49,12 @@ namespace Fifa_Simulation.Groups
                 string groupName = ((char)('A' + gi)).ToString();
                 var h2h = new HeadToHead();
 
-                foreach (var t in group)
+                foreach (var team in group)
                 {
-                    if (!incomingSeed.ContainsKey(t))
-                        incomingSeed[t] = t.Seed;
+                    if (!incomingSeed.ContainsKey(team))
+                        incomingSeed[team] = team.Seed;
 
-                    t.resetRecord();
+                    team.resetRecord();
                 }
 
                 writer.WriteLine($"\n=== GROUP {groupName} ===");
@@ -85,12 +76,8 @@ namespace Fifa_Simulation.Groups
 
                 advancingTeams.Add(standings[0]);
                 advancingTeams.Add(standings[1]);
-
-                // Group-stage non-qualifiers
-                standings[2].Seed = 24; // 17-24
-                standings[3].Seed = 32; // 25-32
-
-                all32.AddRange(standings);
+                thirdPlaceTeams.Add(standings[2]);
+                fourthPlaceTeams.Add(standings[3]);
             }
 
             var rankedWinners = groupWinners
@@ -113,12 +100,12 @@ namespace Fifa_Simulation.Groups
             for (int i = 0; i < rankedRunners.Count; i++)
                 writer.WriteLine($"{i + 1}. {rankedRunners[i].name} (Incoming Seed {incomingSeed[rankedRunners[i]]})");
 
-            foreach (var t in advancingTeams)
-                t.resetRecord();
+            foreach (var team in advancingTeams)
+                team.resetRecord();
 
             writer.WriteLine("\n================ 16-TEAM SINGLE ELIM STAGE ================");
 
-            // Fixed Round of 16 mapping:
+            // Locked bracket path:
             // A1 vs H2, B1 vs G2, C1 vs F2, D1 vs E2, E1 vs D2, F1 vs C2, G1 vs B2, H1 vs A2
             var r16Slots = new List<Team>
             {
@@ -132,18 +119,38 @@ namespace Fifa_Simulation.Groups
                 groupWinners[7], groupRunners[0]
             };
 
-            // Lock bracket path
             for (int i = 0; i < r16Slots.Count; i++)
                 r16Slots[i].Seed = i + 1;
 
             var singleElim = new SingleElimination(r16Slots, reseedBeforeBracket: false);
-            Team champ = singleElim.Run(writer);
+            singleElim.Run(writer);
 
-            if (champ != null)
-                champ.Seed = 1;
+            var playoffOrder = singleElim.GetOrderedFinish();
 
-            foreach (var t in all32)
-                PointsAwarder.Award32TeamRegionPoints(t, sim);
+            var orderedThirds = thirdPlaceTeams
+                .OrderByDescending(t => t.Wins)
+                .ThenBy(t => t.Losses)
+                .ThenBy(t => incomingSeed[t])
+                .ToList();
+
+            var orderedFourths = fourthPlaceTeams
+                .OrderByDescending(t => t.Wins)
+                .ThenBy(t => t.Losses)
+                .ThenBy(t => incomingSeed[t])
+                .ToList();
+
+            var finalOrder = new List<Team>();
+            finalOrder.AddRange(playoffOrder);
+            finalOrder.AddRange(orderedThirds);
+            finalOrder.AddRange(orderedFourths);
+
+            for (int i = 0; i < finalOrder.Count; i++)
+                finalOrder[i].Seed = i + 1;
+
+            foreach (var team in finalOrder)
+                PointsAwarder.Award32TeamRegionPoints(team, sim);
+
+            return finalOrder;
         }
 
         private static List<List<Team>> BuildSeededGroupsWithPots(List<Team> rankedTop32, bool shuffleWithinPots = false)
@@ -222,8 +229,8 @@ namespace Fifa_Simulation.Groups
         private static void PrintGroupRoster(List<Team> group, TextWriter writer)
         {
             writer.WriteLine("Teams:");
-            foreach (var t in group.OrderBy(t => t.Seed))
-                writer.WriteLine($" - Seed {t.Seed}: {t.name} (Src:{t.SourceGroup}, Elo:{t.elo})");
+            foreach (var team in group.OrderBy(t => t.Seed))
+                writer.WriteLine($" - Seed {team.Seed}: {team.name} (Region:{team.Region}, Elo:{team.elo})");
 
             writer.WriteLine();
         }
@@ -234,8 +241,8 @@ namespace Fifa_Simulation.Groups
 
             for (int i = 0; i < standings.Count; i++)
             {
-                var t = standings[i];
-                writer.WriteLine($"{i + 1}. {t.name,-25}  W:{t.Wins}  L:{t.Losses}  Seed:{t.Seed}");
+                var team = standings[i];
+                writer.WriteLine($"{i + 1}. {team.name,-25}  W:{team.Wins}  L:{team.Losses}  Seed:{team.Seed}");
             }
         }
 

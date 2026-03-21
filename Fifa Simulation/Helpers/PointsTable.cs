@@ -40,34 +40,34 @@ namespace Fifa_Simulation.Helpers
             switch (team.Seed)
             {
                 case 1:
-                    team.Points += PointsTable.MajorWinnerPoints[sim];
+                    team.TotalPoints += PointsTable.MajorWinnerPoints[sim];
                     break;
                 case 2:
-                    team.Points += PointsTable.MajorSecondPoints[sim];
+                    team.TotalPoints += PointsTable.MajorSecondPoints[sim];
                     break;
                 case 3:
-                    team.Points += PointsTable.MajorThirdPoints[sim];
+                    team.TotalPoints += PointsTable.MajorThirdPoints[sim];
                     break;
                 case 4:
-                    team.Points += PointsTable.MajorTop4Points[sim];
+                    team.TotalPoints += PointsTable.MajorTop4Points[sim];
                     break;
                 case 6:
-                    team.Points += PointsTable.MajorTop6Points[sim];
+                    team.TotalPoints += PointsTable.MajorTop6Points[sim];
                     break;
                 case 8:
-                    team.Points += PointsTable.MajorTop8Points[sim];
+                    team.TotalPoints += PointsTable.MajorTop8Points[sim];
                     break;
                 case 12:
-                    team.Points += PointsTable.MajorTop12Points[sim];
+                    team.TotalPoints += PointsTable.MajorTop12Points[sim];
                     break;
                 case 16:
-                    team.Points += PointsTable.MajorTop16Points[sim];
+                    team.TotalPoints += PointsTable.MajorTop16Points[sim];
                     break;
                 case 24:
-                    team.Points += PointsTable.MajorTop32UpperPoints[sim];
+                    team.TotalPoints += PointsTable.MajorTop32UpperPoints[sim];
                     break;
                 case 32:
-                    team.Points += PointsTable.MajorTop32LowerPoints[sim];
+                    team.TotalPoints += PointsTable.MajorTop32LowerPoints[sim];
                     break;
             }
         }
@@ -78,28 +78,36 @@ namespace Fifa_Simulation.Helpers
             switch (team.Seed)
             {
                 case 1:
-                    team.Points += PointsTable.RegionalWinnerPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalWinnerPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalWinnerPoints[sim];
                     break;
                 case 2:
-                    team.Points += PointsTable.RegionalSecondPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalSecondPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalSecondPoints[sim];
                     break;
                 case 4:
-                    team.Points += PointsTable.RegionalTop4Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop4Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop4Points[sim];
                     break;
                 case 8:
-                    team.Points += PointsTable.RegionalTop8Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop8Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop8Points[sim];
                     break;
                 case 16:
-                    team.Points += PointsTable.RegionalTop16Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop16Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop16Points[sim];
                     break;
                 case 32:
-                    team.Points += PointsTable.RegionalTop32Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop32Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop32Points[sim];
                     break;
                 case 48:
-                    team.Points += PointsTable.RegionalTop64UpperPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalTop64UpperPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalTop64UpperPoints[sim];
                     break;
                 case 64:
-                    team.Points += PointsTable.RegionalTop64LowerPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalTop64LowerPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalTop64LowerPoints[sim];
                     break;
             }
         }
@@ -109,25 +117,32 @@ namespace Fifa_Simulation.Helpers
             switch (team.Seed)
             {
                 case 1:
-                    team.Points += PointsTable.RegionalWinnerPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalWinnerPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalWinnerPoints[sim];
                     break;
                 case 2:
-                    team.Points += PointsTable.RegionalSecondPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalSecondPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalSecondPoints[sim];
                     break;
                 case 4:
-                    team.Points += PointsTable.RegionalTop4Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop4Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop4Points[sim];
                     break;
                 case 8:
-                    team.Points += PointsTable.RegionalTop8Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop8Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop8Points[sim];
                     break;
                 case 16:
-                    team.Points += PointsTable.RegionalTop16Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop16Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop16Points[sim];
                     break;
                 case 24:
-                    team.Points += PointsTable.RegionalTop24Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop24Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop24Points[sim];
                     break;
                 case 32:
-                    team.Points += PointsTable.RegionalTop32Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop32Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop32Points[sim];
                     break;
             }
         }
@@ -137,22 +152,28 @@ namespace Fifa_Simulation.Helpers
             switch (team.Seed)
             {
                 case 1:
-                    team.Points += PointsTable.RegionalWinnerPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalWinnerPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalWinnerPoints[sim];
                     break;
                 case 2:
-                    team.Points += PointsTable.RegionalSecondPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalSecondPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalSecondPoints[sim];
                     break;
                 case 4:
-                    team.Points += PointsTable.RegionalTop4Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop4Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop4Points[sim];
                     break;
                 case 8:
-                    team.Points += PointsTable.RegionalTop8Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop8Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop8Points[sim];
                     break;
                 case 12:
-                    team.Points += PointsTable.RegionalTop12Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop12Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop12Points[sim];
                     break;
                 case 16:
-                    team.Points += PointsTable.RegionalTop16Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop16Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop16Points[sim];
                     break;
             }
         }
@@ -162,19 +183,24 @@ namespace Fifa_Simulation.Helpers
             switch (team.Seed)
             {
                 case 1:
-                    team.Points += PointsTable.RegionalWinnerPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalWinnerPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalWinnerPoints[sim];
                     break;
                 case 2:
-                    team.Points += PointsTable.RegionalSecondPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalSecondPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalSecondPoints[sim];
                     break;
                 case 4:
-                    team.Points += PointsTable.RegionalTop4Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop4Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop4Points[sim];
                     break;
                 case 6:
-                    team.Points += PointsTable.RegionalTop6Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop6Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop6Points[sim];
                     break;
                 case 8:
-                    team.Points += PointsTable.RegionalTop8Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop8Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop8Points[sim];
                     break;
             }
         }
@@ -184,16 +210,20 @@ namespace Fifa_Simulation.Helpers
             switch (team.Seed)
             {
                 case 1:
-                    team.Points += PointsTable.RegionalWinnerPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalWinnerPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalWinnerPoints[sim];
                     break;
                 case 2:
-                    team.Points += PointsTable.RegionalSecondPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalSecondPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalSecondPoints[sim];
                     break;
                 case 3:
-                    team.Points += PointsTable.RegionalThirdPoints[sim];
+                    team.RegionPoints += PointsTable.RegionalThirdPoints[sim];
+                    team.TotalPoints += PointsTable.RegionalThirdPoints[sim];
                     break;
                 case 4:
-                    team.Points += PointsTable.RegionalTop4Points[sim];
+                    team.RegionPoints += PointsTable.RegionalTop4Points[sim];
+                    team.TotalPoints += PointsTable.RegionalTop4Points[sim];
                     break;
             }
         }

@@ -210,5 +210,7 @@ namespace Fifa_Simulation.Tournaments
         {
             return value > 0 && (value & (value - 1)) == 0;
         }
+
+
     }
 }

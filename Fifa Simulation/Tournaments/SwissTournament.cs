@@ -32,6 +32,8 @@ namespace Fifa_Simulation.Tournaments
             {
                 swissIncomingSeed[t] = t.Seed;
                 t.SwissOpponents.Clear();
+                t.Wins = 0;
+                t.Losses = 0;
             }
         }
 
@@ -62,6 +64,7 @@ namespace Fifa_Simulation.Tournaments
                 }
             }
 
+            ResolveTeams();
             SwissPlacement();
             return GetReseededTop16();
         }
@@ -84,7 +87,6 @@ namespace Fifa_Simulation.Tournaments
                 .ThenByDescending(t => t.elo)
                 .ToList();
 
-            // Adjacent H2H correction for near-equal ties
             for (int i = 0; i < ordered.Count - 1; i++)
             {
                 var a = ordered[i];
@@ -171,12 +173,16 @@ namespace Fifa_Simulation.Tournaments
             {
                 if (team.Wins == 3)
                 {
-                    AdvancedTeams.Add(team);
+                    if (!AdvancedTeams.Contains(team))
+                        AdvancedTeams.Add(team);
+
                     ActiveTeams.Remove(team);
                 }
                 else if (team.Losses == 3)
                 {
-                    EliminatedTeams.Add(team);
+                    if (!EliminatedTeams.Contains(team))
+                        EliminatedTeams.Add(team);
+
                     ActiveTeams.Remove(team);
                 }
             }
@@ -209,7 +215,6 @@ namespace Fifa_Simulation.Tournaments
                     }
                 }
 
-                // fallback if everyone left is a rematch
                 if (opponent == null)
                 {
                     for (int j = ordered.Count - 1; j > i; j--)
@@ -234,15 +239,44 @@ namespace Fifa_Simulation.Tournaments
             return pairings;
         }
 
-        public void DisplaySwissResults(StreamWriter writer, List<Team> teams)
+        public void DisplaySwissResults(StreamWriter writer)
         {
+            if (writer == null)
+                throw new ArgumentNullException(nameof(writer));
+
+            writer.WriteLine("\n==================================================");
+            writer.WriteLine("SWISS RESULTS");
+            writer.WriteLine("==================================================");
+
             writer.WriteLine("\n--- ADVANCED FROM SWISS ---");
-            foreach (var t in teams.OrderByDescending(t => t.Wins).ThenBy(t => t.Losses).ThenBy(t => t.Seed))
+            foreach (var t in AdvancedTeams
+                .OrderByDescending(t => t.Wins)
+                .ThenBy(t => t.Losses)
+                .ThenBy(t => t.Seed))
+            {
                 writer.WriteLine($"{t.name} ({t.Wins}-{t.Losses})");
+            }
 
             writer.WriteLine("\n--- ELIMINATED IN SWISS ---");
-            foreach (var t in EliminatedTeams.OrderByDescending(t => t.Wins).ThenBy(t => t.Losses).ThenBy(t => t.Seed))
+            foreach (var t in EliminatedTeams
+                .OrderByDescending(t => t.Wins)
+                .ThenBy(t => t.Losses)
+                .ThenBy(t => t.Seed))
+            {
                 writer.WriteLine($"{t.name} ({t.Wins}-{t.Losses})");
+            }
+
+            if (ActiveTeams.Count > 0)
+            {
+                writer.WriteLine("\n--- STILL ACTIVE / UNRESOLVED ---");
+                foreach (var t in ActiveTeams
+                    .OrderByDescending(t => t.Wins)
+                    .ThenBy(t => t.Losses)
+                    .ThenBy(t => t.Seed))
+                {
+                    writer.WriteLine($"{t.name} ({t.Wins}-{t.Losses})");
+                }
+            }
         }
 
         public void DisplaySwissMatchLog(StreamWriter writer)

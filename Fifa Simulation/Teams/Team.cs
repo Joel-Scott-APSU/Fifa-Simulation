@@ -15,22 +15,30 @@ namespace Fifa_Simulation.Teams
         public int Wins { get; set; }
         public int Losses { get; set; }
 
-        public int Points { get; set; }
+        public int TotalPoints { get; set; }
+        public int RegionPoints { get; set; }
 
         public int Seed { get; set; }
         public int MatchCounter { get; set; }
 
         public int SourceGroup { get; set; }
+        public int[] RegionalFinishes { get; set; }
+        public int PreviousMajorFinish { get; set; } = 999;
 
-        public Team(string name, int elo)
+        public string Region { get; set; }
+        public List<int> majorFinishes = new List<int> { 33, 33, 33};
+        public Team(string name, int elo, string region)
         {
             this.name = name;
             this.elo = elo;
-            Points = 0;
+            TotalPoints = 0;
+            RegionPoints = 0;
             Seed = 0;
             Wins = 0;
             Losses = 0;
             MatchCounter = 0;
+            RegionalFinishes = new int[3];
+            Region = region;
         }
 
         public void resetRecord()
